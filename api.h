@@ -5,8 +5,9 @@
 #ifndef BARISTA2_API_H
 #define BARISTA2_API_H
 
-#include <memory>
 #include <cassert>
+#include <functional>
+#include <memory>
 #include <vector>
 
 using namespace std;
@@ -22,23 +23,15 @@ namespace barista {
 
 /// Immutable reference.
 template<typename T>
-using ref = const shared_ptr<T>;
-
-/// Mutable reference.
-template<typename T>
-using mut = shared_ptr<T>;
+using ref = shared_ptr<T>;
 
 template<typename T>
-using List = std::vector<T>;
+using List = std::vector<ref<T>>;
 
 class Tree;
 
-template<typename N>
 class RenderNode;
-
-template<typename N>
 class RenderParent;
-
 class Event;
 
 class Key {
@@ -70,28 +63,27 @@ class Node {
     return _key;
   }
 
-  virtual ref<RenderNode<void*>> Instantiate(ref<Tree> t) = 0;
+  virtual ref<RenderNode> Instantiate(ref<Tree> t) = 0;
 
  private:
   ref<Key> _key;
 };
 
-typedef function<void(ref<RenderNode<void*>>)> RenderNodeVisitor;
+typedef function<void(ref<RenderNode>)> RenderNodeVisitor;
 
-template<typename N>
 class RenderNode {
  public:
-  RenderNode(ref<Tree> tree, ref<N> configuration) : _tree(tree), _configuration(configuration) {
+  RenderNode(ref<Tree> tree, ref<Node> configuration) : _tree(tree), _configuration(configuration) {
     Update(configuration);
   }
 
   virtual ~RenderNode() = 0;
 
-  virtual ref<N> GetConfiguration() {
+  virtual ref<Node> GetConfiguration() {
     return _configuration;
   }
 
-  virtual ref<RenderParent<void*>> GetParent() {
+  virtual ref<RenderParent> GetParent() {
     return _parent;
   }
 
@@ -99,11 +91,7 @@ class RenderNode {
     return _tree;
   }
 
-  virtual void DispatchEvent(ref<Event> event) {
-    if (_parent != NULL) {
-      _parent->DispatchEvent(event);
-    }
-  }
+  virtual void DispatchEvent(ref<Event> event);
 
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
 
@@ -112,11 +100,11 @@ class RenderNode {
   /// This operation can be used to temporarily remove nodes in order to move
   /// them around.
   virtual void Detach() {
-    _parent == NULL;
+    _parent = NULL;
   }
 
   /// Attached this node to a [newParent].
-  virtual void Attach(ref<RenderParent<void*>> newParent) {
+  virtual void Attach(ref<RenderParent> newParent) {
     _parent = newParent;
   }
 
@@ -126,38 +114,29 @@ class RenderNode {
   /// all necessary updates to `this` node and its children (if any) happen
   /// correctly. The overridden method must call `super.update` to finalize the
   /// update.
-  virtual void Update(ref<N> newConfiguration) {
+  virtual void Update(ref<Node> newConfiguration) {
     assert(newConfiguration != NULL);
     _configuration = newConfiguration;
   }
 
  private:
   ref<Tree> _tree;
-  mut<N> _configuration;
-  mut<RenderParent<ref<Node>>> _parent;
+  ref<Node> _configuration;
+  ref<RenderParent> _parent;
 };
 
 /// A node that has children.
-template<typename N>
-class RenderParent : public RenderNode<N> {
+class RenderParent : public RenderNode {
  public:
 
-  RenderParent(ref<Tree> tree, ref<N> configuration)
-      : RenderNode(tree, configuration) {}
+  RenderParent(ref<Tree> tree, ref<Node> configuration);
 
-  virtual ~RenderParent()  = 0;
+  virtual ~RenderParent() = 0;
 
   /// Whether any of this node's descentant nodes need to be updated.
   virtual bool GetHasDescendantsNeedingUpdate() { return _hasDescendantsNeedingUpdate; }
 
-  virtual void ScheduleUpdate() {
-    _hasDescendantsNeedingUpdate = true;
-    mut<RenderParent> parent = GetParent();
-    while (parent != NULL) {
-      parent->_hasDescendantsNeedingUpdate = true;
-      parent = parent->parent;
-    }
-  }
+  virtual void ScheduleUpdate();
 
   /// Updates this node and its children.
   ///
@@ -165,10 +144,7 @@ class RenderParent : public RenderNode<N> {
   /// all necessary updates to `this` node and its children (if any) happen
   /// correctly. The overridden method must call `super.update` to finalize the
   /// update.
-  virtual void Update(ref<N> newConfiguration) {
-    _hasDescendantsNeedingUpdate = false;
-    RenderNode::Update(newConfiguration);
-  }
+  virtual void Update(ref<Node> newConfiguration);
 
  private:
   bool _hasDescendantsNeedingUpdate = true;
@@ -177,7 +153,7 @@ class RenderParent : public RenderNode<N> {
 class MultiChildNode : Node {
  public:
   MultiChildNode(ref<Key> key, List<Node> children)
-      : Node(key), _children(children) { }
+      : Node(key), _children(children) {}
   virtual ~MultiChildNode() = 0;
 
  private:
