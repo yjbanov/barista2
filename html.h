@@ -26,6 +26,7 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
  private:
   string _tag;
   map<string, string> _attributes;
+  friend class RenderElement;
 };
 
 class RenderElement : public RenderMultiChildParent {
@@ -33,6 +34,13 @@ class RenderElement : public RenderMultiChildParent {
   RenderElement(shared_ptr<Tree> tree, shared_ptr<Element> configuration)
     : RenderMultiChildParent(tree, configuration) {}
   void Update(shared_ptr<Element> newConfiguration);
+
+  virtual void PrintHtml(string &buf) {
+    auto conf = static_pointer_cast<Element>(GetConfiguration());
+    buf += "<" + conf->_tag + ">";
+    RenderMultiChildParent::PrintHtml(buf);
+    buf += "</" + conf->_tag + ">";
+  }
 };
 
 }

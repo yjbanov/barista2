@@ -17,6 +17,8 @@ class TestWidget : public StatelessWidget {
 int main() {
   auto tree = make_shared<Tree>(make_shared<TestWidget>());
   tree->RenderFrame();
-  cout << "Hello, World!" << endl;
+  auto html = new string("HTML: ");
+  tree->PrintHtml(*html);
+  cout << *html << endl;
   return 0;
 }

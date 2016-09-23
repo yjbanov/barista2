@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <memory>
+#include <string>
 
 using namespace std;
 
@@ -66,6 +67,15 @@ void Tree::RenderFrame() {
 void Tree::VisitChildren(RenderNodeVisitor visitor) {
   visitor(_topLevelNode);
 }
+
+void Tree::PrintHtml(string &buf) {
+  if (_topLevelNode == nullptr) {
+    buf += "null";
+  } else {
+    _topLevelNode->PrintHtml(buf);
+  }
+}
+
 
 shared_ptr<RenderNode> StatelessWidget::Instantiate(shared_ptr<Tree> tree) {
   return make_shared<RenderStatelessWidget>(tree, shared_from_this());

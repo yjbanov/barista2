@@ -69,11 +69,12 @@ class RenderNode {
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
   virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
+  virtual void PrintHtml(string &buf) = 0;
 
  private:
-  shared_ptr<Tree> _tree;
-  shared_ptr<Node> _configuration;
-  shared_ptr<RenderParent> _parent;
+  shared_ptr<Tree> _tree = nullptr;
+  shared_ptr<Node> _configuration = nullptr;
+  shared_ptr<RenderParent> _parent = nullptr;
 };
 
 class Tree : public enable_shared_from_this<Tree> {
@@ -81,10 +82,11 @@ class Tree : public enable_shared_from_this<Tree> {
   Tree(shared_ptr<Widget> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
   void VisitChildren(RenderNodeVisitor visitor);
   void RenderFrame();
+  void PrintHtml(string &buf);
 
  private:
-  shared_ptr<Widget> _topLevelWidget;
-  shared_ptr<RenderNode> _topLevelNode;
+  shared_ptr<Widget> _topLevelWidget = nullptr;
+  shared_ptr<RenderNode> _topLevelNode = nullptr;
 };
 
 class RenderParent : public RenderNode {
@@ -125,8 +127,8 @@ class State {
   virtual shared_ptr<Node> Build() = 0;
 
  private:
-  shared_ptr<RenderStatefulWidget> _node;
-  shared_ptr<StatefulWidget> _config;
+  shared_ptr<RenderStatefulWidget> _node = nullptr;
+  shared_ptr<StatefulWidget> _config = nullptr;
   friend class RenderStatefulWidget;
   friend void internalSetStateNode(shared_ptr<State> state, shared_ptr<RenderStatefulWidget> node);
 };
@@ -138,9 +140,10 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
   RenderStatelessWidget(shared_ptr<Tree> tree, shared_ptr<StatelessWidget> configuration) : RenderParent(tree, configuration) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
   virtual void Update(shared_ptr<StatelessWidget> newConfiguration);
+  virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
-  shared_ptr<RenderNode> _child;
+  shared_ptr<RenderNode> _child = nullptr;
 };
 
 class MultiChildNode : public Node {
@@ -160,10 +163,11 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
   virtual void ScheduleUpdate();
   virtual void Update(shared_ptr<StatefulWidget> newConfiguration);
   virtual shared_ptr<State> GetState() { return _state; }
+  virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
-  shared_ptr<State> _state;
-  shared_ptr<RenderNode> _child;
+  shared_ptr<State> _state = nullptr;
+  shared_ptr<RenderNode> _child = nullptr;
   bool _isDirty = false;
 };
 
@@ -174,6 +178,11 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
 
   virtual void VisitChildren(RenderNodeVisitor visitor);
   virtual void Update(shared_ptr<MultiChildNode> newConfiguration);
+  virtual void PrintHtml(string &buf) {
+    for (auto child : _currentChildren) {
+      child->PrintHtml(buf);
+    }
+  }
 
  private:
   void _appendChildren(
