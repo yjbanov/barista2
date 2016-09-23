@@ -29,9 +29,7 @@ bool operator==(const std::shared_ptr<Key> a, const std::shared_ptr<Key> b) {
       (a != nullptr && b != nullptr && a->_value == b->_value);
 }
 
-RenderNode::RenderNode(shared_ptr<Tree> tree, shared_ptr<Node> configuration) : _tree(tree), _configuration(configuration) {
-  Update(configuration);
-}
+RenderNode::RenderNode(shared_ptr<Tree> tree) : _tree(tree) { }
 
 void RenderNode::Update(shared_ptr<Node> newConfiguration) {
   assert(newConfiguration != nullptr);
@@ -39,8 +37,7 @@ void RenderNode::Update(shared_ptr<Node> newConfiguration) {
 }
 
 
-RenderParent::RenderParent(shared_ptr<Tree> tree, shared_ptr<Node> configuration)
-  : RenderNode(tree, configuration) {}
+RenderParent::RenderParent(shared_ptr<Tree> tree) : RenderNode(tree) { }
 
 void RenderParent::ScheduleUpdate() {
   _hasDescendantsNeedingUpdate = true;
@@ -59,9 +56,9 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration) {
 void Tree::RenderFrame() {
   if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
-  } else {
-    _topLevelNode->Update(_topLevelNode->GetConfiguration());
   }
+
+  _topLevelNode->Update(_topLevelWidget);
 }
 
 void Tree::VisitChildren(RenderNodeVisitor visitor) {
@@ -78,11 +75,11 @@ void Tree::PrintHtml(string &buf) {
 
 
 shared_ptr<RenderNode> StatelessWidget::Instantiate(shared_ptr<Tree> tree) {
-  return make_shared<RenderStatelessWidget>(tree, shared_from_this());
+  return make_shared<RenderStatelessWidget>(tree);
 }
 
 shared_ptr<RenderNode> StatefulWidget::Instantiate(shared_ptr<Tree> t) {
-  return make_shared<RenderStatefulWidget>(t, shared_from_this());
+  return make_shared<RenderStatefulWidget>(t);
 }
 
 void State::ScheduleUpdate() { _node->ScheduleUpdate(); }
@@ -100,8 +97,9 @@ void RenderStatefulWidget::ScheduleUpdate() {
   RenderParent::ScheduleUpdate();
 }
 
-void RenderStatelessWidget::Update(shared_ptr<StatelessWidget> newConfiguration) {
-  assert(newConfiguration != nullptr);
+void RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
+  assert(configPtr != nullptr);
+  auto newConfiguration = static_pointer_cast<StatelessWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
     // or replace with a new one.
@@ -114,18 +112,21 @@ void RenderStatelessWidget::Update(shared_ptr<StatelessWidget> newConfiguration)
         _child->Detach();
       }
       _child = newChildConfiguration->Instantiate(GetTree());
+      _child->Update(newChildConfiguration);
       _child->Attach(shared_from_this());
     }
   } else if (GetHasDescendantsNeedingUpdate()) {
+    assert(_child != nullptr);
     // Own configuration is the same, but some children are scheduled to be
     // updated.
     _child->Update(_child->GetConfiguration());
   }
-  Update(newConfiguration);
+  RenderParent::Update(newConfiguration);
 }
 
-void RenderStatefulWidget::Update(shared_ptr<StatefulWidget> newConfiguration) {
-  assert(newConfiguration != nullptr);
+void RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
+  assert(configPtr != nullptr);
+  auto newConfiguration = static_pointer_cast<StatefulWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
     // or replace with a new one.
@@ -140,6 +141,7 @@ void RenderStatefulWidget::Update(shared_ptr<StatefulWidget> newConfiguration) {
         _child->Detach();
       }
       _child = newChildConfiguration->Instantiate(GetTree());
+      _child->Update(newChildConfiguration);
       _child->Attach(shared_from_this());
     }
   } else if (_isDirty) {
@@ -151,7 +153,7 @@ void RenderStatefulWidget::Update(shared_ptr<StatefulWidget> newConfiguration) {
   }
 
   _isDirty = false;
-  Update(newConfiguration);
+  RenderParent::Update(newConfiguration);
 }
 
 void RenderMultiChildParent::VisitChildren(RenderNodeVisitor visitor) {
@@ -164,14 +166,18 @@ void RenderMultiChildParent::_appendChildren(
     vector<shared_ptr<Node>>::iterator from,
     vector<shared_ptr<Node>>::iterator to) {
   assert((to - from) > 0);
-  for (auto node = from; node != to; node++) {
-    shared_ptr<RenderNode> renderNode = node->get()->Instantiate(GetTree());
+  for (auto nodeiter = from; nodeiter != to; nodeiter++) {
+    shared_ptr<Node> node = *nodeiter;
+    shared_ptr<RenderNode> renderNode = node->Instantiate(GetTree());
+    renderNode->Update(node);
     renderNode->Attach(shared_from_this());
     _currentChildren.push_back(renderNode);
   }
 }
 
-void RenderMultiChildParent::Update(shared_ptr<MultiChildNode> newConfiguration) {
+void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
+  assert(configPtr != nullptr);
+  auto newConfiguration = static_pointer_cast<MultiChildNode>(configPtr);
   if (GetConfiguration() != newConfiguration) {
     vector<shared_ptr<Node>> newChildList = newConfiguration->GetChildren();
 
@@ -230,6 +236,7 @@ void RenderMultiChildParent::Update(shared_ptr<MultiChildNode> newConfiguration)
           vector<shared_ptr<RenderNode>> insertedChildren;
           for (shared_ptr<Node> vn : newChildren) {
             auto child = vn->Instantiate(GetTree());
+            child->Update(vn);
             child->Attach(shared_from_this());
             insertedChildren.push_back(child);
           }
@@ -269,6 +276,7 @@ void RenderMultiChildParent::Update(shared_ptr<MultiChildNode> newConfiguration)
 
             if (!updated) {
               auto child = newChild->Instantiate(GetTree());
+              child->Update(newChild);
               child->Attach(shared_from_this());
               newRange.push_back(child);
             }
@@ -288,7 +296,7 @@ void RenderMultiChildParent::Update(shared_ptr<MultiChildNode> newConfiguration)
       child->Update(child->GetConfiguration());
     }
   }
-  RenderParent::Update(static_pointer_cast<Node>(newConfiguration));
+  RenderParent::Update(configPtr);
 }
 
 }

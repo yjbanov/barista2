@@ -61,7 +61,7 @@ typedef function<void(shared_ptr<RenderNode>)> RenderNodeVisitor;
 
 class RenderNode {
  public:
-  RenderNode(shared_ptr<Tree> tree, shared_ptr<Node> configuration);
+  RenderNode(shared_ptr<Tree> tree);
   virtual shared_ptr<Node> GetConfiguration() { return _configuration; }
   virtual shared_ptr<RenderParent> GetParent() { return _parent; }
   virtual shared_ptr<Tree> GetTree() { return _tree; }
@@ -91,7 +91,7 @@ class Tree : public enable_shared_from_this<Tree> {
 
 class RenderParent : public RenderNode {
  public:
-  RenderParent(shared_ptr<Tree> tree, shared_ptr<Node> configuration);
+  RenderParent(shared_ptr<Tree> tree);
   virtual bool GetHasDescendantsNeedingUpdate() { return _hasDescendantsNeedingUpdate; }
   virtual void ScheduleUpdate();
   virtual void Update(shared_ptr<Node> newConfiguration);
@@ -137,9 +137,9 @@ void internalSetStateNode(shared_ptr<State> state, shared_ptr<RenderStatefulWidg
 
 class RenderStatelessWidget : public RenderParent, public enable_shared_from_this<RenderStatelessWidget> {
  public:
-  RenderStatelessWidget(shared_ptr<Tree> tree, shared_ptr<StatelessWidget> configuration) : RenderParent(tree, configuration) {}
+  RenderStatelessWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
-  virtual void Update(shared_ptr<StatelessWidget> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
@@ -158,10 +158,10 @@ class MultiChildNode : public Node {
 
 class RenderStatefulWidget : public RenderParent, public enable_shared_from_this<RenderStatefulWidget> {
  public:
-  RenderStatefulWidget(shared_ptr<Tree> tree, shared_ptr<StatefulWidget> configuration) : RenderParent(tree, configuration) {}
+  RenderStatefulWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor);
   virtual void ScheduleUpdate();
-  virtual void Update(shared_ptr<StatefulWidget> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration);
   virtual shared_ptr<State> GetState() { return _state; }
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
@@ -173,11 +173,10 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
 
 class RenderMultiChildParent : public RenderParent, public enable_shared_from_this<RenderMultiChildParent> {
  public:
-  RenderMultiChildParent(shared_ptr<Tree> tree, shared_ptr<MultiChildNode> configuration)
-      : RenderParent(tree, static_pointer_cast<Node>(configuration)) {}
+  RenderMultiChildParent(shared_ptr<Tree> tree) : RenderParent(tree) {}
 
   virtual void VisitChildren(RenderNodeVisitor visitor);
-  virtual void Update(shared_ptr<MultiChildNode> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void PrintHtml(string &buf) {
     for (auto child : _currentChildren) {
       child->PrintHtml(buf);

@@ -31,9 +31,8 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
 
 class RenderElement : public RenderMultiChildParent {
  public:
-  RenderElement(shared_ptr<Tree> tree, shared_ptr<Element> configuration)
-    : RenderMultiChildParent(tree, configuration) {}
-  void Update(shared_ptr<Element> newConfiguration);
+  RenderElement(shared_ptr<Tree> tree) : RenderMultiChildParent(tree) {}
+  void Update(shared_ptr<Node> newConfiguration);
 
   virtual void PrintHtml(string &buf) {
     auto conf = static_pointer_cast<Element>(GetConfiguration());

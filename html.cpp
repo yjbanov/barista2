@@ -8,11 +8,12 @@
 namespace barista {
 
 shared_ptr<RenderNode> Element::Instantiate(shared_ptr<Tree> tree) {
-  return make_shared<RenderElement>(tree, shared_from_this());
+  return make_shared<RenderElement>(tree);
 }
 
-void RenderElement::Update(shared_ptr<Element> newConfiguration) {
-  RenderMultiChildParent::Update(newConfiguration);
+void RenderElement::Update(shared_ptr<Node> configPtr) {
+  shared_ptr<Element> newConfiguration = static_pointer_cast<Element>(configPtr);
+  RenderMultiChildParent::Update(configPtr);
 }
 
 } // namespace barista
