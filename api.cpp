@@ -33,7 +33,7 @@ RenderNode::RenderNode(shared_ptr<Tree> tree, shared_ptr<Node> configuration) : 
 }
 
 void RenderNode::Update(shared_ptr<Node> newConfiguration) {
-  assert(newConfiguration != NULL);
+  assert(newConfiguration != nullptr);
   _configuration = newConfiguration;
 }
 
@@ -44,7 +44,7 @@ RenderParent::RenderParent(shared_ptr<Tree> tree, shared_ptr<Node> configuration
 void RenderParent::ScheduleUpdate() {
   _hasDescendantsNeedingUpdate = true;
   shared_ptr<RenderParent> parent = GetParent();
-  while (parent != NULL) {
+  while (parent != nullptr) {
     parent->_hasDescendantsNeedingUpdate = true;
     parent = parent->GetParent();
   }
@@ -56,7 +56,7 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration) {
 }
 
 void Tree::RenderFrame() {
-  if (_topLevelNode == NULL) {
+  if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
   } else {
     _topLevelNode->Update(_topLevelNode->GetConfiguration());
@@ -91,16 +91,16 @@ void RenderStatefulWidget::ScheduleUpdate() {
 }
 
 void RenderStatelessWidget::Update(shared_ptr<StatelessWidget> newConfiguration) {
-  assert(newConfiguration != NULL);
+  assert(newConfiguration != nullptr);
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
     // or replace with a new one.
     shared_ptr<Node> newChildConfiguration = newConfiguration->Build();
-    if (_child != NULL && _canUpdate(_child, newChildConfiguration)) {
+    if (_child != nullptr && _canUpdate(_child, newChildConfiguration)) {
       _child->Update(newChildConfiguration);
     } else {
       // Replace child
-      if (_child != NULL) {
+      if (_child != nullptr) {
         _child->Detach();
       }
       _child = newChildConfiguration->Instantiate(GetTree());
@@ -142,6 +142,143 @@ void RenderStatefulWidget::Update(shared_ptr<StatefulWidget> newConfiguration) {
 
   _isDirty = false;
   Update(newConfiguration);
+}
+
+void RenderMultiChildParent::VisitChildren(RenderNodeVisitor visitor) {
+  for (auto child : _currentChildren) {
+    visitor(child);
+  }
+}
+
+void RenderMultiChildParent::_appendChildren(
+    vector<shared_ptr<Node>>::iterator from,
+    vector<shared_ptr<Node>>::iterator to) {
+  assert((to - from) > 0);
+  for (auto node = from; node != to; node++) {
+    shared_ptr<RenderNode> renderNode = node->get()->Instantiate(GetTree());
+    renderNode->Attach(shared_from_this());
+    _currentChildren.push_back(renderNode);
+  }
+}
+
+void RenderMultiChildParent::Update(shared_ptr<MultiChildNode> newConfiguration) {
+  if (GetConfiguration() != newConfiguration) {
+    vector<shared_ptr<Node>> newChildList = newConfiguration->GetChildren();
+
+    if (_currentChildren.empty()) {
+      if (!newChildList.empty()) {
+        _appendChildren(newChildList.begin(), newChildList.end());
+      }
+    } else if (newChildList.empty()) {
+      if (!_currentChildren.empty()) {
+        _removeAllCurrentChildren();
+      }
+    } else {
+      // Both are not empty
+      // TODO: switch from indexes to iterators.
+      long from = 0;
+      while(from < _currentChildren.size() &&
+          from < newChildList.size() &&
+          _canUpdate(_currentChildren[from], newChildList[from])) {
+        _currentChildren[from]->Update(newChildList[from]);
+        from++;
+      }
+
+      if (from == _currentChildren.size()) {
+        if (from < newChildList.size()) {
+          // More children were added at the end, append them
+          _appendChildren(newChildList.begin() + from, newChildList.end());
+        }
+      } else if (from == newChildList.size()) {
+        // Some children at the end were removed, remove them
+        for (auto i = _currentChildren.size() - 1; i >= from; i--) {
+          _currentChildren[i]->Detach();
+        }
+        _currentChildren.erase(_currentChildren.begin() + from, _currentChildren.end());
+      } else {
+        // Walk lists from the end and try to update as much as possible
+        auto currTo = _currentChildren.size();
+        auto newTo = newChildList.size();
+        while(currTo > from &&
+            newTo > from &&
+            _canUpdate(_currentChildren[currTo - 1], newChildList[newTo - 1])) {
+          _currentChildren[currTo - 1]->Update(newChildList[newTo - 1]);
+          currTo--;
+          newTo--;
+        }
+
+        if (newTo == from && currTo > from) {
+          // Some children in the middle were removed, remove them
+          for (auto i = currTo - 1; i >= from; i--) {
+            _currentChildren[i]->Detach();
+          }
+          _currentChildren.erase(_currentChildren.begin() + from, _currentChildren.begin() + currTo);
+        } else if (currTo == from && newTo > from) {
+          // New children were inserted in the middle, insert them
+          vector<shared_ptr<Node>> newChildren(newChildList.begin() + from, newChildList.begin() + newTo);
+
+          vector<shared_ptr<RenderNode>> insertedChildren;
+          for (shared_ptr<Node> vn : newChildren) {
+            auto child = vn->Instantiate(GetTree());
+            child->Attach(shared_from_this());
+            insertedChildren.push_back(child);
+          }
+
+          _currentChildren.insert(_currentChildren.begin() + from, insertedChildren.begin(), insertedChildren.end());
+        } else {
+          // We're strictly in the middle of both lists, at which point nodes
+          // moved around, were added, or removed. If the nodes are keyed, map
+          // them by key and figure out all the moves.
+
+          // TODO: this implementation is very naive; it plucks _all_ children
+          // and rearranges them according to new configuration. A smarter
+          // implementation would compute the minimum sufficient number of
+          // moves to transform the tree into the desired configuration.
+
+          vector<shared_ptr<RenderNode>> disputedRange;
+          for (long i = from; i < currTo; i++) {
+            auto child = _currentChildren[i];
+            child->Detach();
+            disputedRange.push_back(child);
+          }
+
+          vector<shared_ptr<RenderNode>> newRange;
+          for (long i = from; i < newTo; i++) {
+            auto newChild = newChildList[i];
+            // First try to fing an existing node that could be updated
+            bool updated = false;
+            for (auto child : disputedRange) {
+              if (_canUpdate(child, newChild)) {
+                child->Update(newChild);
+                child->Attach(shared_from_this());
+                updated = true;
+                newRange.push_back(child);
+                break;
+              }
+            }
+
+            if (!updated) {
+              auto child = newChild->Instantiate(GetTree());
+              child->Attach(shared_from_this());
+              newRange.push_back(child);
+            }
+          }
+
+          auto oldChildren = _currentChildren;
+          _currentChildren = vector<shared_ptr<RenderNode>>();
+          _currentChildren.insert(_currentChildren.end(), oldChildren.begin(), oldChildren.begin() + from);
+          _currentChildren.insert(_currentChildren.end(), newRange.begin(), newRange.end());
+          _currentChildren.insert(_currentChildren.end(), oldChildren.begin() + currTo, oldChildren.end());
+          assert(_currentChildren.size() == newChildList.size());
+        }
+      }
+    }
+  } else if (GetHasDescendantsNeedingUpdate()) {
+    for (auto child : _currentChildren) {
+      child->Update(child->GetConfiguration());
+    }
+  }
+  RenderParent::Update(static_pointer_cast<Node>(newConfiguration));
 }
 
 }

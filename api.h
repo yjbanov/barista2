@@ -41,7 +41,7 @@ class Key final {
   string GetValue() { return _value; }
 
  private:
-  string _value;
+  string _value {""};
   friend bool operator==(const shared_ptr<Key> a, const shared_ptr<Key> b);
 };
 
@@ -49,12 +49,12 @@ bool operator==(const shared_ptr<Key> a, const shared_ptr<Key> b);
 
 class Node {
  public:
-  Node(shared_ptr<Key> key) : _key(key) {};
   virtual shared_ptr<Key> GetKey() { return _key; }
+  virtual void SetKey(shared_ptr<Key> key) { _key = key; }
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> t) = 0;
 
  private:
-  shared_ptr<Key> _key;
+  shared_ptr<Key> _key = nullptr;
 };
 
 typedef function<void(shared_ptr<RenderNode>)> RenderNodeVisitor;
@@ -65,7 +65,7 @@ class RenderNode {
   virtual shared_ptr<Node> GetConfiguration() { return _configuration; }
   virtual shared_ptr<RenderParent> GetParent() { return _parent; }
   virtual shared_ptr<Tree> GetTree() { return _tree; }
-  virtual void Detach() { _parent = NULL; }
+  virtual void Detach() { _parent = nullptr; }
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
   virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
@@ -100,20 +100,20 @@ class RenderParent : public RenderNode {
 
 class Widget : public Node {
  public:
-  Widget(shared_ptr<Key> key) : Node(key) {}
+  Widget() : Node() {}
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree) = 0;
 };
 
 class StatelessWidget : public Widget, public enable_shared_from_this<StatelessWidget> {
  public:
-  StatelessWidget(shared_ptr<Key> key) : Widget(key) {}
+  StatelessWidget() : Widget() {}
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree);
   virtual shared_ptr<Node> Build() = 0;
 };
 
 class StatefulWidget : public Widget, public enable_shared_from_this<StatefulWidget> {
  public:
-  StatefulWidget(shared_ptr<Key> key) : Widget(key) {}
+  StatefulWidget() : Widget() {}
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> t);
   virtual shared_ptr<State> CreateState() = 0;
 };
@@ -143,9 +143,11 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
   shared_ptr<RenderNode> _child;
 };
 
-class MultiChildNode : Node {
+class MultiChildNode : public Node {
  public:
-  MultiChildNode(shared_ptr<Key> key, vector<shared_ptr<Node>> children) : Node(key), _children(children) {}
+  MultiChildNode() : Node() {}
+  vector<shared_ptr<Node>> GetChildren() { return _children; }
+  void AddChild(shared_ptr<Node> child) { _children.push_back(child); }
 
  private:
   vector<shared_ptr<Node>> _children;
@@ -163,6 +165,23 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
   shared_ptr<State> _state;
   shared_ptr<RenderNode> _child;
   bool _isDirty = false;
+};
+
+class RenderMultiChildParent : public RenderParent, public enable_shared_from_this<RenderMultiChildParent> {
+ public:
+  RenderMultiChildParent(shared_ptr<Tree> tree, shared_ptr<MultiChildNode> configuration)
+      : RenderParent(tree, static_pointer_cast<Node>(configuration)) {}
+
+  virtual void VisitChildren(RenderNodeVisitor visitor);
+  virtual void Update(shared_ptr<MultiChildNode> newConfiguration);
+
+ private:
+  void _appendChildren(
+      vector<shared_ptr<Node>>::iterator from,
+      vector<shared_ptr<Node>>::iterator to);
+  virtual void _removeAllCurrentChildren() { _currentChildren.clear(); }
+
+  vector<shared_ptr<RenderNode>> _currentChildren;
 };
 
 }  // namespace barista

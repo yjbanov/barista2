@@ -1,16 +1,16 @@
 #include <iostream>
-#include <memory>
 
 #include "api.h"
+#include "html.h"
 
 using namespace std;
 using namespace barista;
 
 class TestWidget : public StatelessWidget {
  public:
-  TestWidget() : StatelessWidget(nullptr) {}
+  TestWidget() : StatelessWidget() {}
   shared_ptr<Node> Build() {
-    return nullptr;
+    return make_shared<Element>("div");
   }
 };
 
