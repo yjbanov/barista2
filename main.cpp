@@ -14,11 +14,35 @@ class TestWidget : public StatelessWidget {
   }
 };
 
-int main() {
+void Expect(string, string);
+void ExpectHtml(shared_ptr<Tree>, string);
+
+void TestPrintTag() {
   auto tree = make_shared<Tree>(make_shared<TestWidget>());
-  tree->RenderFrame();
-  auto html = new string("HTML: ");
-  tree->PrintHtml(*html);
-  cout << *html << endl;
+  ExpectHtml(tree, "<div></div>");
+}
+
+void TestPrintText() {
+  auto tree = make_shared<Tree>(make_shared<Text>("hello"));
+  ExpectHtml(tree, "hello");
+}
+
+int main() {
+  TestPrintTag();
+  TestPrintText();
   return 0;
+}
+
+void Expect(string actual, string expected) {
+  if (actual != expected) {
+    cout << "Test failed:\n  Expected: " << expected << "\n  Was: " << actual << endl;
+    exit(1);
+  }
+}
+
+void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
+  tree->RenderFrame();
+  auto html = new string("");
+  tree->PrintHtml(*html);
+  Expect(*html, expectedHtml);
 }

@@ -49,6 +49,7 @@ bool operator==(const shared_ptr<Key> a, const shared_ptr<Key> b);
 
 class Node {
  public:
+  Node() { }
   virtual shared_ptr<Key> GetKey() { return _key; }
   virtual void SetKey(shared_ptr<Key> key) { _key = key; }
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> t) = 0;
@@ -79,13 +80,13 @@ class RenderNode {
 
 class Tree : public enable_shared_from_this<Tree> {
  public:
-  Tree(shared_ptr<Widget> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
+  Tree(shared_ptr<Node> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
   void VisitChildren(RenderNodeVisitor visitor);
   void RenderFrame();
   void PrintHtml(string &buf);
 
  private:
-  shared_ptr<Widget> _topLevelWidget = nullptr;
+  shared_ptr<Node> _topLevelWidget = nullptr;
   shared_ptr<RenderNode> _topLevelNode = nullptr;
 };
 

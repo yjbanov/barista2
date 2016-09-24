@@ -17,7 +17,7 @@ using namespace std;
 class Element : public MultiChildNode, public enable_shared_from_this<Element> {
  public:
   Element(string tag) : _tag(tag), MultiChildNode() {}
-  shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> t);
+  shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree);
   string GetTag() { return _tag; }
   map<string, string>::iterator GetAttributes() { return _attributes.begin(); };
   void SetAttribute(string name, string value) { _attributes[name] = value; }
@@ -39,6 +39,26 @@ class RenderElement : public RenderMultiChildParent {
     buf += "<" + conf->_tag + ">";
     RenderMultiChildParent::PrintHtml(buf);
     buf += "</" + conf->_tag + ">";
+  }
+};
+
+class Text : public Node {
+ public:
+  Text(string value) : _value(value), Node() {}
+  virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree);
+  string GetValue() { return _value; }
+
+ private:
+  string _value;
+};
+
+class RenderText : public RenderNode {
+ public:
+  RenderText(shared_ptr<Tree> tree) : RenderNode(tree) {}
+  virtual void VisitChildren(RenderNodeVisitor visitor) {}
+  virtual void PrintHtml(string &buf) {
+    auto conf = static_pointer_cast<Text>(GetConfiguration());
+    buf += conf->GetValue();
   }
 };
 

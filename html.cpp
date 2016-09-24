@@ -16,4 +16,8 @@ void RenderElement::Update(shared_ptr<Node> configPtr) {
   RenderMultiChildParent::Update(configPtr);
 }
 
+shared_ptr<RenderNode> Text::Instantiate(shared_ptr<Tree> tree) {
+  return make_shared<RenderText>(tree);
+}
+
 } // namespace barista
