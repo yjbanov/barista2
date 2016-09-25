@@ -1,6 +1,13 @@
 <!doctype html>
 <html>
 <body>
+<div id="host"></div>
+
 <script src="main.js"></script>
+<script type="text/javascript">
+    var host = document.querySelector('#host');
+    renderApp = Module.cwrap('RenderApp', 'string', []);
+    host.innerHTML = renderApp();
+</script>
 </body>
 </html>
