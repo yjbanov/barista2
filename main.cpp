@@ -27,6 +27,16 @@ class ElementWithChildrenTest : public StatelessWidget {
   }
 };
 
+class ElementWithAttrsTest : public StatelessWidget {
+ public:
+  ElementWithAttrsTest() : StatelessWidget() {}
+  shared_ptr<Node> Build() {
+    auto elem = make_shared<Element>("div");
+    elem->SetAttribute("id", "foo");
+    return elem;
+  }
+};
+
 void Expect(string, string);
 void ExpectHtml(shared_ptr<Tree>, string);
 
@@ -45,10 +55,16 @@ void TestPrintElementWithChildren() {
   ExpectHtml(tree, "<div><div>hello</div><span></span></div>");
 }
 
+void TestPrintElementWithAttrs() {
+  auto tree = make_shared<Tree>(make_shared<ElementWithAttrsTest>());
+  ExpectHtml(tree, "<div id=\"foo\"></div>");
+}
+
 int main() {
   TestPrintTag();
   TestPrintText();
   TestPrintElementWithChildren();
+  TestPrintElementWithAttrs();
   return 0;
 }
 

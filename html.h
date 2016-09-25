@@ -36,7 +36,15 @@ class RenderElement : public RenderMultiChildParent {
 
   virtual void PrintHtml(string &buf) {
     auto conf = static_pointer_cast<Element>(GetConfiguration());
-    buf += "<" + conf->_tag + ">";
+    buf += "<" + conf->_tag;
+    if (conf->_attributes.size() > 0) {
+      auto first = conf->_attributes.begin();
+      auto last = conf->_attributes.end();
+      for (auto attr = first; attr != last; attr++) {
+        buf += " " + attr->first + "=\"" + attr->second + "\"";
+      }
+    }
+    buf += ">";
     RenderMultiChildParent::PrintHtml(buf);
     buf += "</" + conf->_tag + ">";
   }
