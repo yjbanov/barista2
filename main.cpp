@@ -61,10 +61,12 @@ void TestPrintElementWithAttrs() {
 }
 
 int main() {
+  cout << "Start main" << endl;
   TestPrintTag();
   TestPrintText();
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
+  cout << "Start end" << endl;
   return 0;
 }
 
