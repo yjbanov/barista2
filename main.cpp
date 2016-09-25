@@ -22,6 +22,7 @@ class ElementWithChildrenTest : public StatelessWidget {
     auto childDiv = make_shared<Element>("div");
     childDiv->AddChild(make_shared<Text>("hello"));
     elem->AddChild(childDiv);
+    elem->AddChild(make_shared<Element>("span"));
     return elem;
   }
 };
@@ -41,7 +42,7 @@ void TestPrintText() {
 
 void TestPrintElementWithChildren() {
   auto tree = make_shared<Tree>(make_shared<ElementWithChildrenTest>());
-  ExpectHtml(tree, "<div><div>hello</div></div>");
+  ExpectHtml(tree, "<div><div>hello</div><span></span></div>");
 }
 
 int main() {
