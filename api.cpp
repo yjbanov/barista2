@@ -65,6 +65,10 @@ void Tree::VisitChildren(RenderNodeVisitor visitor) {
   visitor(_topLevelNode);
 }
 
+void Tree::DispatchEvent(string type, string baristaId) {
+  _topLevelNode->DispatchEvent(type, baristaId);
+}
+
 void Tree::PrintHtml(string &buf) {
   if (_topLevelNode == nullptr) {
     buf += "null";
@@ -88,13 +92,9 @@ void internalSetStateNode(shared_ptr<State> state, shared_ptr<RenderStatefulWidg
   state->_node = node;
 }
 
-void RenderStatefulWidget::VisitChildren(RenderNodeVisitor visitor) {
-  visitor(_child);
-}
-
-void RenderStatefulWidget::ScheduleUpdate() {
-  _isDirty = true;
-  RenderParent::ScheduleUpdate();
+void RenderStatelessWidget::DispatchEvent(string type, string baristaId) {
+  if (_child == nullptr) return;
+  _child->DispatchEvent(type, baristaId);
 }
 
 void RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
@@ -122,6 +122,20 @@ void RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
     _child->Update(_child->GetConfiguration());
   }
   RenderParent::Update(newConfiguration);
+}
+
+void RenderStatefulWidget::VisitChildren(RenderNodeVisitor visitor) {
+  visitor(_child);
+}
+
+void RenderStatefulWidget::ScheduleUpdate() {
+  _isDirty = true;
+  RenderParent::ScheduleUpdate();
+}
+
+void RenderStatefulWidget::DispatchEvent(string type, string baristaId) {
+  if (_child == nullptr) return;
+  _child->DispatchEvent(type, baristaId);
 }
 
 void RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {

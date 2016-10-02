@@ -3,11 +3,22 @@
 <body>
 <div id="host"></div>
 
-<script src="main.js"></script>
-<script type="text/javascript">
-    var host = document.querySelector('#host');
-    renderApp = Module.cwrap('RenderApp', 'string', []);
-    host.innerHTML = renderApp();
+<script type="application/javascript">
+    function allReady() {
+        var renderFrame = Module.cwrap('RenderFrame', 'string', []);
+        var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
+        var host = document.querySelector('#host');
+        host.addEventListener("click", function(event) {
+            var bid = event.target.getAttribute("_bid");
+            if (bid) {
+                dispatchEvent("click", bid);
+            } else {
+                console.log(">>> caugth event on target with no _bid:", event.target);
+            }
+        });
+        host.innerHTML = renderFrame();
+    }
 </script>
+<script src="main.js"></script>
 </body>
 </html>

@@ -70,6 +70,7 @@ class RenderNode {
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
   virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
+  virtual void DispatchEvent(string type, string baristaId) = 0;
   virtual void PrintHtml(string &buf) = 0;
 
  private:
@@ -82,6 +83,7 @@ class Tree : public enable_shared_from_this<Tree> {
  public:
   Tree(shared_ptr<Node> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
   void VisitChildren(RenderNodeVisitor visitor);
+  virtual void DispatchEvent(string type, string baristaId);
   void RenderFrame();
   void PrintHtml(string &buf);
 
@@ -140,6 +142,7 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
  public:
   RenderStatelessWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
+  virtual void DispatchEvent(string type, string baristaId);
   virtual void Update(shared_ptr<Node> newConfiguration);
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
@@ -161,6 +164,7 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
  public:
   RenderStatefulWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor);
+  virtual void DispatchEvent(string type, string baristaId);
   virtual void ScheduleUpdate();
   virtual void Update(shared_ptr<Node> newConfiguration);
   virtual shared_ptr<State> GetState() { return _state; }

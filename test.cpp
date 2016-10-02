@@ -6,9 +6,9 @@
 using namespace std;
 using namespace barista;
 
-class TestWidget : public StatelessWidget {
+class ElementTagTest : public StatelessWidget {
  public:
-  TestWidget() : StatelessWidget() {}
+  ElementTagTest() : StatelessWidget() {}
   shared_ptr<Node> Build() {
     return make_shared<Element>("div");
   }
@@ -37,11 +37,28 @@ class ElementWithAttrsTest : public StatelessWidget {
   }
 };
 
+class EventListenerTest : public StatelessWidget {
+ public:
+  EventListenerTest() : StatelessWidget() {}
+  shared_ptr<Node> Build() {
+      auto div = make_shared<Element>("div");
+      auto btn = make_shared<Element>("button");
+      btn->AddEventListener("click", [this]() {
+        eventLog.push_back("click");
+      });
+      div->AddChild(btn);
+      return div;
+  }
+
+  vector<string> eventLog;
+};
+
+void Expect(unsigned long, unsigned long);
 void Expect(string, string);
 void ExpectHtml(shared_ptr<Tree>, string);
 
 void TestPrintTag() {
-  auto tree = make_shared<Tree>(make_shared<TestWidget>());
+  auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
   ExpectHtml(tree, "<div></div>");
 }
 
@@ -60,21 +77,42 @@ void TestPrintElementWithAttrs() {
   ExpectHtml(tree, "<div id=\"foo\"></div>");
 }
 
+void TestEventListener() {
+  auto widget = make_shared<EventListenerTest>();
+  auto tree = make_shared<Tree>(widget);
+  ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
+  Expect(widget->eventLog.size(), 0);
+  tree->DispatchEvent("click", "1");
+  Expect(widget->eventLog.size(), 1);
+  tree->DispatchEvent("scroll", "1");
+  Expect(widget->eventLog.size(), 1);
+}
+
 int main() {
   cout << "Start tests" << endl;
   TestPrintTag();
   TestPrintText();
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
+  TestEventListener();
   cout << "End tests" << endl;
   return 0;
 }
 
-void Expect(string actual, string expected) {
+template<typename T>
+void Expect(T actual, T expected) {
   if (actual != expected) {
     cout << "Test failed:\n  Expected: " << expected << "\n  Was: " << actual << endl;
     exit(1);
   }
+}
+
+void Expect(string actual, string expected) {
+  Expect<string>(actual, expected);
+}
+
+void Expect(unsigned long actual, unsigned long expected) {
+  Expect<unsigned long>(actual, expected);
 }
 
 void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
