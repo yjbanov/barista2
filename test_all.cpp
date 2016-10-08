@@ -1,7 +1,9 @@
 #include <iostream>
+#include <vector>
 
 #include "api.h"
 #include "html.h"
+#include "style.h"
 #include "test.h"
 
 using namespace std;
@@ -85,6 +87,15 @@ void TestEventListener() {
   Expect(widget->eventLog.size(), 1UL);
 }
 
+void TestStyleBasics() {
+  vector<StyleAttribute> attrs = {
+      {"padding", "5px"},
+      {"margin", "8px"},
+  };
+  Style s = style(attrs);
+  Expect(s.GetCss(), string("padding: 5px;\nmargin: 8px;\n"));
+}
+
 int main() {
   cout << "Start tests" << endl;
   TestPrintTag();
@@ -92,6 +103,7 @@ int main() {
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
   TestEventListener();
+  TestStyleBasics();
   cout << "End tests" << endl;
   return 0;
 }
