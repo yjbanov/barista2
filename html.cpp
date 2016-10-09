@@ -53,6 +53,15 @@ void RenderElement::PrintHtml(string &buf) {
   if (conf->_bid != "") {
     buf += " _bid=\"" + conf->_bid + "\"";
   }
+  if (conf->_classNames.size() > 0) {
+    buf += " class=\"";
+    auto classNames = conf->_classNames;
+    buf += classNames[0];
+    for (auto i = classNames.begin() + 1; i != classNames.end(); i++) {
+      buf += " " + *i;
+    }
+    buf += "\"";
+  }
   buf += ">";
   RenderMultiChildParent::PrintHtml(buf);
   buf += "</" + conf->_tag + ">";

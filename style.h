@@ -33,10 +33,12 @@ class Style {
  public:
   Style(string css)
       : _css(css),
-        _identifierClass(to_string(_idCounter++)) { }
+        _identifierClass("_s" + to_string(_idCounter++)) { }
 
   string GetCss() { return _css; }
   bool GetIsRegistered() { return _isRegistered; }
+  string GetIdentifierClass() { return _identifierClass; }
+  static void DangerouslyResetIdCounterForTesting() { _idCounter = 1; }
 
  private:
   static uint64_t _idCounter;

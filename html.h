@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "api.h"
+#include "style.h"
 
 namespace barista {
 
@@ -28,6 +29,8 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
   // TODO: rename to AddAttribute.
   void SetAttribute(string name, string value) { _attributes[name] = value; }
   void AddEventListener(string type, EventListener listener);
+  void AddStyle(Style &style) { AddClassName(style.GetIdentifierClass()); }
+  void AddClassName(string className) { _classNames.push_back(className); }
 
  private:
   // Monotonically increasing element ID counter.
@@ -48,6 +51,9 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
 
   // HTML attributes, e.g. "id".
   map<string, string> _attributes;
+
+  // User-defined CSS class names.
+  vector<string> _classNames;
 
   // Barista ID.
   //

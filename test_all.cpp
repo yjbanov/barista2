@@ -87,13 +87,36 @@ void TestEventListener() {
   Expect(widget->eventLog.size(), 1UL);
 }
 
+void TestClasses() {
+  auto elem = make_shared<Element>("div");
+  elem->AddClassName("foo");
+  elem->AddClassName("bar");
+  auto tree = make_shared<Tree>(elem);
+  ExpectHtml(tree, "<div class=\"foo bar\"></div>");
+}
+
 void TestStyleBasics() {
+  Style::DangerouslyResetIdCounterForTesting();
   vector<StyleAttribute> attrs = {
       {"padding", "5px"},
       {"margin", "8px"},
   };
   Style s = style(attrs);
   Expect(s.GetCss(), string("padding: 5px;\nmargin: 8px;\n"));
+}
+
+void TestStyleApplication() {
+  Style::DangerouslyResetIdCounterForTesting();
+  vector<StyleAttribute> attrs = { };
+  Style s1 = style(attrs);
+  Style s2 = style(attrs);
+
+  auto elem = make_shared<Element>("div");
+  elem->AddStyle(s1);
+  elem->AddStyle(s2);
+  elem->AddClassName("foo");
+  auto tree = make_shared<Tree>(elem);
+  ExpectHtml(tree, "<div class=\"_s1 _s2 foo\"></div>");
 }
 
 int main() {
@@ -103,7 +126,9 @@ int main() {
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
   TestEventListener();
+  TestClasses();
   TestStyleBasics();
+  TestStyleApplication();
   cout << "End tests" << endl;
   return 0;
 }
