@@ -142,6 +142,7 @@ void TestBasicStatefulWidget() {
   auto tree = make_shared<Tree>(widget);
   ExpectHtml(tree, "Hello");
   widget->state->label = "World";
+  ExpectHtml(tree, "Hello");
   widget->state->ScheduleUpdate();
   ExpectHtml(tree, "World");
 }
