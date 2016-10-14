@@ -56,6 +56,24 @@ class EventListenerTest : public StatelessWidget {
   vector<string> eventLog;
 };
 
+class BasicStatefulWidgetTestState : public State {
+ public:
+  virtual shared_ptr<Node> Build() {
+    return make_shared<Text>(label);
+  }
+
+  string label = "Hello";
+};
+
+class BasicStatefulWidgetTest : public StatefulWidget {
+ public:
+  shared_ptr<BasicStatefulWidgetTestState> state = nullptr;
+
+  virtual shared_ptr<State> CreateState() {
+    return state = make_shared<BasicStatefulWidgetTestState>();
+  }
+};
+
 void TestPrintTag() {
   auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
   ExpectHtml(tree, "<div></div>");
@@ -119,6 +137,15 @@ void TestStyleApplication() {
   ExpectHtml(tree, "<div class=\"_s1 _s2 foo\"></div>");
 }
 
+void TestBasicStatefulWidget() {
+  auto widget = make_shared<BasicStatefulWidgetTest>();
+  auto tree = make_shared<Tree>(widget);
+  ExpectHtml(tree, "Hello");
+  widget->state->label = "World";
+  widget->state->ScheduleUpdate();
+  ExpectHtml(tree, "World");
+}
+
 int main() {
   cout << "Start tests" << endl;
   TestPrintTag();
@@ -129,6 +156,7 @@ int main() {
   TestClasses();
   TestStyleBasics();
   TestStyleApplication();
+  TestBasicStatefulWidget();
   cout << "End tests" << endl;
   return 0;
 }
