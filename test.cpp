@@ -22,3 +22,8 @@ void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
   tree->PrintHtml(*html);
   Expect(*html, expectedHtml);
 }
+
+void ExpectDiff(shared_ptr<Tree> tree, HtmlDiff& expected) {
+  auto diff = tree->RenderFrame();
+  Expect(diff, expected.ComputeDiff());
+}

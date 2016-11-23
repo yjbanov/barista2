@@ -26,6 +26,7 @@ class HtmlDiff {
 
   // Lifecycle.
   void AssertReady();
+  string ComputeDiff();
   string Finalize();
 
  private:

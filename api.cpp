@@ -55,11 +55,13 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration) {
 }
 
 string Tree::RenderFrame() {
+  GetHtmlDiff()->AssertReady();
+  GetHtmlDiff()->Move(0);
+
   if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
   }
 
-  GetHtmlDiff()->AssertReady();
   _topLevelNode->Update(_topLevelWidget);
   return GetHtmlDiff()->Finalize();
 }
@@ -186,6 +188,7 @@ void RenderMultiChildParent::_appendChildren(
   for (auto nodeiter = from; nodeiter != to; nodeiter++) {
     shared_ptr<Node> node = *nodeiter;
     shared_ptr<RenderNode> renderNode = node->Instantiate(GetTree());
+    GetHtmlDiff()->Move(_currentChildren.size());
     renderNode->Update(node);
     renderNode->Attach(shared_from_this());
     _currentChildren.push_back(renderNode);

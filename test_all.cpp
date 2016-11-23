@@ -147,6 +147,60 @@ void TestBasicStatefulWidget() {
   ExpectHtml(tree, "World");
 }
 
+void TestCreateRootDiff() {
+  HtmlDiff diff;
+  diff.Move(0);
+  diff.Element("div");
+  diff.Pop();
+
+  auto tree = make_shared<Tree>(make_shared<Element>("div"));
+  ExpectDiff(tree, diff);
+}
+
+class CreateFirstChildDiffState : public State {
+ public:
+  bool withChild = false;
+
+  virtual shared_ptr<Node> Build() {
+    auto parent = make_shared<Element>("div");
+    if (withChild) {
+      parent->AddChild(make_shared<Element>("span"));
+    }
+    return parent;
+  }
+};
+
+class CreateFirstChildDiffTest : public StatefulWidget {
+ public:
+  shared_ptr<CreateFirstChildDiffState> state = nullptr;
+
+  virtual shared_ptr<State> CreateState() {
+    return state = make_shared<CreateFirstChildDiffState>();
+  }
+};
+
+void TestCreateFirstChildDiff() {
+  HtmlDiff diff;
+  diff.Move(0);
+  diff.Push();
+  diff.Move(0);
+  diff.Element("span");
+  diff.Pop();
+  diff.Pop();
+
+  auto widget = make_shared<CreateFirstChildDiffTest>();
+  auto tree = make_shared<Tree>(widget);
+  tree->RenderFrame();
+  widget->state->withChild = true;
+  widget->state->ScheduleUpdate();
+  ExpectDiff(tree, diff);
+}
+
+void TestHtmlDiffing() {
+  TestCreateRootDiff();
+  TestCreateFirstChildDiff();
+}
+
 int main() {
   cout << "Start tests" << endl;
   TestPrintTag();
@@ -158,6 +212,7 @@ int main() {
   TestStyleBasics();
   TestStyleApplication();
   TestBasicStatefulWidget();
+  TestHtmlDiffing();
   cout << "End tests" << endl;
   return 0;
 }

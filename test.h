@@ -9,5 +9,6 @@ using namespace barista;
 
 template<typename T> void Expect(T actual, T expected);
 void ExpectHtml(shared_ptr<Tree>, string);
+void ExpectDiff(shared_ptr<Tree> tree, HtmlDiff& expected);
 
 #endif //BARISTA2_TEST_H

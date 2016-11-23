@@ -26,7 +26,7 @@ void HtmlDiff::AssertReady() {
   }
 }
 
-string HtmlDiff::Finalize() {
+string HtmlDiff::ComputeDiff() {
   stringstream ss;
   ss << "[";
   for (auto op = _ops.begin(); op != _ops.end(); op++) {
@@ -36,8 +36,13 @@ string HtmlDiff::Finalize() {
     ss << *op;
   }
   ss << "]";
-  _instance = new HtmlDiff();
   return ss.str();
+}
+
+string HtmlDiff::Finalize() {
+  auto diff = ComputeDiff();
+  _instance = new HtmlDiff();
+  return diff;
 }
 
 void HtmlDiff::Move(int position) {
