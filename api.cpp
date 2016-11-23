@@ -3,6 +3,7 @@
 //
 
 #include "api.h"
+#include "diff.h"
 
 #include <cassert>
 #include <memory>
@@ -53,12 +54,14 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration) {
   RenderNode::Update(newConfiguration);
 }
 
-void Tree::RenderFrame() {
+string Tree::RenderFrame() {
   if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
   }
 
+  GetHtmlDiff()->AssertReady();
   _topLevelNode->Update(_topLevelWidget);
+  return GetHtmlDiff()->Finalize();
 }
 
 void Tree::VisitChildren(RenderNodeVisitor visitor) {

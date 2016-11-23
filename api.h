@@ -5,6 +5,8 @@
 #ifndef BARISTA2_API_H
 #define BARISTA2_API_H
 
+#include "diff.h"
+
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -84,7 +86,8 @@ class Tree : public enable_shared_from_this<Tree> {
   Tree(shared_ptr<Node> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
   void VisitChildren(RenderNodeVisitor visitor);
   virtual void DispatchEvent(string type, string baristaId);
-  void RenderFrame();
+  // Applies state changes and produces a serialize HTML diff.
+  string RenderFrame();
   void PrintHtml(string &buf);
 
  private:

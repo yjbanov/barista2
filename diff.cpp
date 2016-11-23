@@ -11,6 +11,35 @@ using namespace std;
 
 namespace barista {
 
+HtmlDiff* HtmlDiff::_instance = new HtmlDiff();
+
+HtmlDiff* GetHtmlDiff() {
+  if (HtmlDiff::_instance == nullptr) {
+    throw "HtmlDiff instance is null.";
+  }
+  return HtmlDiff::_instance;
+};
+
+void HtmlDiff::AssertReady() {
+  if (_ops.size() > 0) {
+    throw "Empty ops list expected but found " + to_string(_ops.size()) + " ops.";
+  }
+}
+
+string HtmlDiff::Finalize() {
+  stringstream ss;
+  ss << "[";
+  for (auto op = _ops.begin(); op != _ops.end(); op++) {
+    if (op != _ops.begin()) {
+      ss << ",";
+    }
+    ss << *op;
+  }
+  ss << "]";
+  _instance = new HtmlDiff();
+  return ss.str();
+}
+
 void HtmlDiff::Move(int position) {
   _AddString("move");
   _AddNumber(position);
