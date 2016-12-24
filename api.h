@@ -18,6 +18,9 @@ using namespace std;
 
 namespace barista {
 
+/// Computes the longest increasing subsequence of a list of numbers.
+vector<int> ComputeLongestIncreasingSubsequence(vector<int> & sequence);
+
 /// A cast that's dynamic in debug mode and static in release mode.
 #ifdef RELEASE_MODE
 #define sdcast static_cast
@@ -192,6 +195,10 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
   }
 
  private:
+  void _pairWiseDiff(
+      shared_ptr<MultiChildNode> oldConfiguration,
+      shared_ptr<MultiChildNode> newConfiguration
+  );
   void _appendChildren(
       vector<shared_ptr<Node>>::iterator from,
       vector<shared_ptr<Node>>::iterator to);

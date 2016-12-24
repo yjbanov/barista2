@@ -21,15 +21,7 @@ void Element::AddEventListener(string type, EventListener listener) {
 }
 
 void RenderElement::Update(shared_ptr<Node> configPtr) {
-  shared_ptr<Element> newConfiguration = static_pointer_cast<Element>(configPtr);
-  if (GetConfiguration() == nullptr) {
-    // Creating a new element implies a push
-    GetHtmlDiff()->Element(newConfiguration->GetTag());
-  } else {
-    GetHtmlDiff()->Push();
-  }
   RenderMultiChildParent::Update(configPtr);
-  GetHtmlDiff()->Pop();
 }
 
 void RenderElement::DispatchEvent(string type, string baristaId) {
@@ -59,6 +51,9 @@ void RenderElement::PrintHtml(string &buf) {
   }
   if (conf->_bid != "") {
     buf += " _bid=\"" + conf->_bid + "\"";
+  }
+  if (conf->GetKey() != nullptr) {
+    buf += " _bkey=\"" + conf->GetKey()->GetValue() + "\"";
   }
   if (conf->_classNames.size() > 0) {
     buf += " class=\"";

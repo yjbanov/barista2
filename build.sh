@@ -1,6 +1,7 @@
 #!/bin/sh
 
 set -e
+set -x
 
 # Compiler command
 CC="emcc -std=c++11 -O3 -s ASSERTIONS=1 -s NO_EXIT_RUNTIME=1"
@@ -18,4 +19,5 @@ $CC diff.bc api.bc style.bc html.bc main.bc -o main.js \
 
 # Compile tests
 $CC test.cpp -o test.bc
-$CC api.bc html.bc test.bc -o test.js
+$CC test_all.cpp -o test_all.bc
+$CC api.bc html.bc test.bc test_all.bc -o test_all.js

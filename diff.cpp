@@ -11,6 +11,8 @@ using namespace std;
 
 namespace barista {
 
+const string ChildListDiff::_emptyString = "";
+
 HtmlDiff* HtmlDiff::_instance = new HtmlDiff();
 
 HtmlDiff* GetHtmlDiff() {
@@ -45,7 +47,7 @@ string HtmlDiff::Finalize() {
   return diff;
 }
 
-void HtmlDiff::Move(int position) {
+void HtmlDiff::Move(signed long position) {
   _AddString("move");
   _AddNumber(position);
 }
@@ -63,11 +65,41 @@ void HtmlDiff::Element(string tag) {
   _AddString(tag);
 }
 
+void HtmlDiff::UpdateChildren(ChildListDiff* childListDiff) {
+  _AddString("diff");
+
+  auto removes = childListDiff->_removes;
+  _AddNumber(removes.size());
+  for (auto r = removes.begin(); r != removes.end(); r++) {
+    _AddNumber(*r);
+  }
+
+  auto insertions = childListDiff->_insertions;
+  _AddNumber(insertions.size());
+  for (auto i = insertions.begin(); i != insertions.end(); i++) {
+    _AddNumber(get<0>(*i));
+    Insertion* insertion = get<1>(*i);
+    if (insertion->IsNewChild()) {
+      _AddString(insertion->Html());
+    } else {
+      _AddNumber(insertion->MoveFrom());
+    }
+  }
+
+  auto updates = childListDiff->_updates;
+  _AddNumber(updates.size());
+  for (auto i = updates.begin(); i != updates.end(); i++) {
+    _AddNumber(*i);
+  }
+}
+
+// TODO: assert that _ops is only mutated when the diff is not locked.
+
 void HtmlDiff::_AddString(string s) {
   _ops.push_back("\"" + s + "\"");
 }
 
-void HtmlDiff::_AddNumber(int n) {
+void HtmlDiff::_AddNumber(signed long n) {
   _ops.push_back(to_string(n));
 }
 

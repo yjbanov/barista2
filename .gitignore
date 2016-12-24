@@ -2,3 +2,5 @@
 main.js*
 test.js*
 *.bc
+cmake-build-debug
+.DS_Store
