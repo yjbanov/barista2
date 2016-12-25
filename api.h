@@ -195,15 +195,6 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
   }
 
  private:
-  void _pairWiseDiff(
-      shared_ptr<MultiChildNode> oldConfiguration,
-      shared_ptr<MultiChildNode> newConfiguration
-  );
-  void _appendChildren(
-      vector<shared_ptr<Node>>::iterator from,
-      vector<shared_ptr<Node>>::iterator to);
-  virtual void _removeAllCurrentChildren() { _currentChildren.clear(); }
-
   vector<shared_ptr<RenderNode>> _currentChildren;
 };
 
