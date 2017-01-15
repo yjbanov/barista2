@@ -2,5 +2,11 @@
 main.js*
 test.js*
 *.bc
+*.a
 cmake-build-debug
 .DS_Store
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+unittests

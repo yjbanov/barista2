@@ -1,5 +1,5 @@
 #include <iostream>
-#include <emscripten.h>
+#include <emscripten/emscripten.h>
 
 #include "api.h"
 #include "html.h"

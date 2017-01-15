@@ -23,10 +23,6 @@ class HtmlDiff {
   HtmlDiff() { };
 
   // Ops.
-  void Move(signed long position);
-  void Push();
-  void Pop();
-  void Element(string tag);
   void UpdateChildren(ChildListDiff* childListDiff);
 
   // Lifecycle.

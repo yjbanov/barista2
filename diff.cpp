@@ -47,24 +47,6 @@ string HtmlDiff::Finalize() {
   return diff;
 }
 
-void HtmlDiff::Move(signed long position) {
-  _AddString("move");
-  _AddNumber(position);
-}
-
-void HtmlDiff::Push() {
-  _AddString("push");
-}
-
-void HtmlDiff::Pop() {
-  _AddString("pop");
-}
-
-void HtmlDiff::Element(string tag) {
-  _AddString("element");
-  _AddString(tag);
-}
-
 void HtmlDiff::UpdateChildren(ChildListDiff* childListDiff) {
   _AddString("diff");
 

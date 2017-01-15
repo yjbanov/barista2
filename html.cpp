@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <iostream>
 
 #include "api.h"
 #include "html.h"
@@ -20,8 +21,20 @@ void Element::AddEventListener(string type, EventListener listener) {
   _eventListeners.push_back(EventListenerConfig(type, listener));
 }
 
-void RenderElement::Update(shared_ptr<Node> configPtr) {
-  RenderMultiChildParent::Update(configPtr);
+bool RenderElement::Update(shared_ptr<Node> configPtr) {
+  if (dynamic_pointer_cast<shared_ptr<Element>>(configPtr)) {
+    return false;
+  }
+
+  if (GetConfiguration() != nullptr) {
+    shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
+    shared_ptr<Element> element = static_pointer_cast<Element>(configPtr);
+    if (config->GetTag() != element->GetTag()) {
+      return false;
+    }
+  }
+
+  return RenderMultiChildParent::Update(configPtr);
 }
 
 void RenderElement::DispatchEvent(string type, string baristaId) {

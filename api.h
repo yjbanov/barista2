@@ -21,13 +21,6 @@ namespace barista {
 /// Computes the longest increasing subsequence of a list of numbers.
 vector<int> ComputeLongestIncreasingSubsequence(vector<int> & sequence);
 
-/// A cast that's dynamic in debug mode and static in release mode.
-#ifdef RELEASE_MODE
-#define sdcast static_cast
-#else
-#define sdcast dynamic_cast
-#endif // RELEASE_MODE
-
 /// Framework class pre-declarations.
 class Tree;
 class Widget;
@@ -73,7 +66,15 @@ class RenderNode {
   virtual shared_ptr<Tree> GetTree() { return _tree; }
   virtual void Detach() { _parent = nullptr; }
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
-  virtual void Update(shared_ptr<Node> newConfiguration);
+
+  /// Updates this render node using [newConfiguration].
+  ///
+  /// Returns `true` if the new configuration is compatible with this node and
+  /// in which case the update was applied (including no-op update). Returns
+  /// `false` if and only if the new configuration is not compatible with this
+  /// render node.
+  virtual bool Update(shared_ptr<Node> newConfiguration);
+
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
   virtual void DispatchEvent(string type, string baristaId) = 0;
   virtual void PrintHtml(string &buf) = 0;
@@ -103,7 +104,7 @@ class RenderParent : public RenderNode {
   RenderParent(shared_ptr<Tree> tree);
   virtual bool GetHasDescendantsNeedingUpdate() { return _hasDescendantsNeedingUpdate; }
   virtual void ScheduleUpdate();
-  virtual void Update(shared_ptr<Node> newConfiguration);
+  virtual bool Update(shared_ptr<Node> newConfiguration);
 
  private:
   bool _hasDescendantsNeedingUpdate = true;
@@ -149,7 +150,7 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
   RenderStatelessWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
   virtual void DispatchEvent(string type, string baristaId);
-  virtual void Update(shared_ptr<Node> newConfiguration);
+  virtual bool Update(shared_ptr<Node> newConfiguration);
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
@@ -172,7 +173,7 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
   virtual void VisitChildren(RenderNodeVisitor visitor);
   virtual void DispatchEvent(string type, string baristaId);
   virtual void ScheduleUpdate();
-  virtual void Update(shared_ptr<Node> newConfiguration);
+  virtual bool Update(shared_ptr<Node> newConfiguration);
   virtual shared_ptr<State> GetState() { return _state; }
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
@@ -187,7 +188,7 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
   RenderMultiChildParent(shared_ptr<Tree> tree) : RenderParent(tree) {}
 
   virtual void VisitChildren(RenderNodeVisitor visitor);
-  virtual void Update(shared_ptr<Node> newConfiguration);
+  virtual bool Update(shared_ptr<Node> newConfiguration);
   virtual void PrintHtml(string &buf) {
     for (auto child : _currentChildren) {
       child->PrintHtml(buf);

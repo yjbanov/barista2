@@ -10,6 +10,9 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <typeindex>
+#include <typeinfo>
+#include <iostream>
 
 using namespace std;
 
@@ -34,9 +37,10 @@ bool operator==(const std::shared_ptr<Key> a, const std::shared_ptr<Key> b) {
 
 RenderNode::RenderNode(shared_ptr<Tree> tree) : _tree(tree) { }
 
-void RenderNode::Update(shared_ptr<Node> newConfiguration) {
+bool RenderNode::Update(shared_ptr<Node> newConfiguration) {
   assert(newConfiguration != nullptr);
   _configuration = newConfiguration;
+  return true;
 }
 
 
@@ -51,9 +55,10 @@ void RenderParent::ScheduleUpdate() {
   }
 }
 
-void RenderParent::Update(shared_ptr<Node> newConfiguration) {
+bool RenderParent::Update(shared_ptr<Node> newConfiguration) {
   _hasDescendantsNeedingUpdate = false;
   RenderNode::Update(newConfiguration);
+  return true;
 }
 
 string Tree::RenderFrame() {
@@ -114,8 +119,13 @@ void RenderStatelessWidget::DispatchEvent(string type, string baristaId) {
   _child->DispatchEvent(type, baristaId);
 }
 
-void RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
+bool RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
   assert(configPtr != nullptr);
+
+  if (typeid(GetConfiguration()) != typeid(configPtr)) {
+    return false;
+  }
+
   auto newConfiguration = static_pointer_cast<StatelessWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
@@ -138,7 +148,7 @@ void RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
     // updated.
     _child->Update(_child->GetConfiguration());
   }
-  RenderParent::Update(newConfiguration);
+  return RenderParent::Update(newConfiguration);
 }
 
 void RenderStatefulWidget::VisitChildren(RenderNodeVisitor visitor) {
@@ -155,8 +165,13 @@ void RenderStatefulWidget::DispatchEvent(string type, string baristaId) {
   _child->DispatchEvent(type, baristaId);
 }
 
-void RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
+bool RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
   assert(configPtr != nullptr);
+
+  if (typeid(GetConfiguration()) != typeid(configPtr)) {
+    return false;
+  }
+
   auto newConfiguration = static_pointer_cast<StatefulWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
@@ -184,7 +199,7 @@ void RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
   }
 
   _isDirty = false;
-  RenderParent::Update(newConfiguration);
+  return RenderParent::Update(newConfiguration);
 }
 
 void RenderMultiChildParent::VisitChildren(RenderNodeVisitor visitor) {
@@ -243,8 +258,13 @@ vector<int> ComputeLongestIncreasingSubsequence(vector<int> & sequence) {
   return lis;
 }
 
-void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
+bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   assert(configPtr != nullptr);
+
+  if (!dynamic_pointer_cast<MultiChildNode>(configPtr)) {
+    return false;
+  }
+
   auto newConfiguration = static_pointer_cast<MultiChildNode>(configPtr);
   auto oldConfiguration = static_pointer_cast<MultiChildNode>(GetConfiguration());
 
@@ -255,27 +275,37 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
         child->Update(child->GetConfiguration());
       }
     }
-    RenderParent::Update(configPtr);
-    return;
+    return RenderParent::Update(configPtr);
   }
 
   ChildListDiff diff;
   vector<shared_ptr<Node>> newChildren = newConfiguration->GetChildren();
-  int baseCount = (int) _currentChildren.size();
-  map<string, tuple<shared_ptr<RenderNode>, int, bool>> baseMap;
-  //  |             |                       |    |
-  //  key           render node             |    keep?
-  //                                        base index
+
+  // A tuple with tracking information about a child node
+  using TrackedChild = tuple<
+    vector<shared_ptr<RenderNode>>::iterator,  // points to _currentChildren
+    int,  // index of the child in _currentChildren
+    bool  // whether the child pointed to should be retained
+  >;
+
+  // A vector of tracked children.
+  using TrackedChildren = vector<TrackedChild>;
+
+  TrackedChildren currentChildren;
+  map<string, TrackedChildren::iterator> keyMap;
 
   for (auto iter = _currentChildren.begin(); iter != _currentChildren.end(); iter++) {
     auto node = *iter;
-    auto key = node->GetConfiguration()->GetKey();
+    currentChildren.push_back({
+        iter,
+        (int) (iter - _currentChildren.begin()),
+        false,
+    });
+    auto trackedChildIter = currentChildren.end() - 1;
+    shared_ptr<Node> config = node->GetConfiguration();
+    auto key = config->GetKey();
     if (key != nullptr) {
-      baseMap[key->GetValue()] = {
-          node,
-          (int) (iter - _currentChildren.begin()),
-          false, // assume it's removed, unless we find it later in the target list
-      };
+      keyMap[key->GetValue()] = trackedChildIter;
     }
   }
 
@@ -289,10 +319,11 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
     auto key = node->GetKey();
     int baseIndex = -1;
     if (key != nullptr) {
-      auto baseEntry = baseMap.find(key->GetValue());
-      if (baseEntry != baseMap.end()) {
-        baseIndex = get<1>(baseEntry->second);
-        get<2>(baseEntry->second) = true;
+      auto baseEntry = keyMap.find(key->GetValue());
+      if (baseEntry != keyMap.end()) {
+        TrackedChild baseChild = *(baseEntry->second);
+        baseIndex = get<1>(baseChild);
+        get<2>(baseChild) = true;
         sequence.push_back(baseIndex);
       }
     }
@@ -300,11 +331,9 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   }
 
   // Compute removes
-  for (auto i = _currentChildren.begin(); i != _currentChildren.end(); i++) {
-    auto baseChild = *i;
-    auto tuple = baseMap[baseChild->GetConfiguration()->GetKey()->GetValue()];
-    if (!get<2>(tuple)) {
-      diff.Remove(get<1>(tuple));
+  for (auto i = currentChildren.begin(); i != currentChildren.end(); i++) {
+    if (!get<2>(*i)) {
+      diff.Remove((int) (i - currentChildren.begin()));
     }
   }
 
@@ -312,6 +341,7 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   vector<int> lis = ComputeLongestIncreasingSubsequence(sequence);
   auto insertionPoint = lis.begin();
   vector<shared_ptr<RenderNode>> newChildVector;
+  int baseCount = (int) _currentChildren.size();
   for (auto targetEntry = targetList.begin(); targetEntry != targetList.end(); targetEntry++) {
     // Three possibilities:
     //   - it's a new child => its base index == -1
@@ -358,7 +388,7 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
     diff.Render();
   }
 
-  RenderParent::Update(configPtr);
+  return RenderParent::Update(configPtr);
 }
 
 }

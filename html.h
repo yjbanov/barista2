@@ -69,7 +69,7 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
 class RenderElement : public RenderMultiChildParent {
  public:
   RenderElement(shared_ptr<Tree> tree) : RenderMultiChildParent(tree) {}
-  void Update(shared_ptr<Node> newConfiguration);
+  bool Update(shared_ptr<Node> newConfiguration);
   virtual void DispatchEvent(string type, string baristaId);
   virtual void PrintHtml(string &buf);
 };

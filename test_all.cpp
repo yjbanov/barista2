@@ -147,7 +147,7 @@ void TestBasicStatefulWidget() {
   ExpectHtml(tree, "World");
 }
 
-void TestCreateRootDiff() {
+void TestKeyedCreateRootDiff() {
   ChildListDiff childDiff;
   childDiff.NewChild(0, "<div _bkey=\"a\"></div>");
   HtmlDiff diff;
@@ -184,7 +184,7 @@ class CreateFirstChildDiffTest : public StatefulWidget {
   }
 };
 
-void TestCreateFirstChildDiff() {
+void TestKeyedCreateFirstChildDiff() {
   HtmlDiff diff;
 
   ChildListDiff parentDiff;
@@ -235,7 +235,7 @@ class BeforeAfterTest : public StatefulWidget {
   shared_ptr<BeforeAfterTestState> _state;
 };
 
-void TestRemoveOnlyChildDiff() {
+void TestKeyedRemoveOnlyChildDiff() {
   HtmlDiff diff;
 
   ChildListDiff parentDiff;
@@ -258,10 +258,50 @@ void TestRemoveOnlyChildDiff() {
   test->ExpectStateDiff(after, diff);
 }
 
-void TestHtmlDiffing() {
-  TestCreateRootDiff();
-  TestCreateFirstChildDiff();
-  TestRemoveOnlyChildDiff();
+void TestIdenticalRebuild() {
+  HtmlDiff diff;
+
+  auto before = make_shared<Element>("div");
+  auto beforeChild = make_shared<Element>("span");
+  before->AddChild(beforeChild);
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = make_shared<Element>("div");
+  auto afterChild = make_shared<Element>("span");
+  after->AddChild(afterChild);
+  test->ExpectStateDiff(after, diff);
+}
+
+void TestMixedHtmlDiffing() {
+  HtmlDiff diff;
+
+  auto b = make_shared<Element>("div");
+  auto bc0 = make_shared<Element>("span");
+  bc0->SetKey(make_shared<Key>("1"));
+  b->AddChild(bc0);
+  auto bc1 = make_shared<Element>("span");
+  b->AddChild(bc1);
+  auto bc2 = make_shared<Element>("span");
+  bc2->SetKey(make_shared<Key>("2"));
+  b->AddChild(bc2);
+  auto bc3 = make_shared<Element>("span");
+  b->AddChild(bc3);
+  auto bc4 = make_shared<Element>("span");
+  b->AddChild(bc4);
+  auto bc5 = make_shared<Element>("span");
+  bc5->SetKey(make_shared<Key>("3"));
+  b->AddChild(bc5);
+  auto bc6 = make_shared<Element>("span");
+  bc6->SetKey(make_shared<Key>("4"));
+  b->AddChild(bc6);
+  auto bc7 = make_shared<Element>("span");
+  b->AddChild(bc7);
+  auto test = make_shared<BeforeAfterTest>(b);
+
+  auto after = make_shared<Element>("div");
+  auto afterChild = make_shared<Element>("span");
+  after->AddChild(afterChild);
+  test->ExpectStateDiff(after, diff);
 }
 
 void ExpectLis(vector<int> input, vector<int> output) {
@@ -282,6 +322,49 @@ void TestComputeLongestIncreasingSubsequence() {
   // shifts
   ExpectLis({1, 2, 3, 4, 5, 0}, {1, 2, 3, 4, 5});
   ExpectLis({5, 0, 1, 2, 3, 4}, {0, 1, 2, 3, 4});
+}
+
+void TestUnkeyedCreateRootDiff() {
+  ChildListDiff childDiff;
+  childDiff.NewChild(0, "<div></div>");
+  HtmlDiff diff;
+  diff.UpdateChildren(&childDiff);
+
+  auto div = make_shared<Element>("div");
+  auto tree = make_shared<Tree>(div);
+  ExpectDiff(tree, diff);
+}
+
+void TestUnkeyedCreateFirstChildDiff() {
+  HtmlDiff diff;
+
+  auto before = make_shared<Element>("div");
+  auto beforeChild = make_shared<Element>("span");
+  before->AddChild(beforeChild);
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = make_shared<Element>("div");
+  auto afterChild = make_shared<Element>("span");
+  after->AddChild(afterChild);
+  test->ExpectStateDiff(after, diff);
+}
+
+void TestKeyedHtmlDiffing() {
+  TestKeyedCreateRootDiff();
+  TestKeyedCreateFirstChildDiff();
+  TestKeyedRemoveOnlyChildDiff();
+}
+
+void TestUnkeyedHtmlDiffing() {
+  TestUnkeyedCreateRootDiff();
+  // TestUnkeyedCreateFirstChildDiff();
+  //TestIdenticalRebuild();
+}
+
+void TestHtmlDiffing() {
+  TestKeyedHtmlDiffing();
+  TestUnkeyedHtmlDiffing();
+  //TestMixedHtmlDiffing();
 }
 
 int main() {
