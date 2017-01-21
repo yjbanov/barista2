@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 # directory of Emscripten.
 include_directories("$ENV{EMSCRIPTEN_ROOT}/emscripten/1.35.0/system/include/")
 
-add_library(libbarista2 api.h api.cpp html.h html.cpp style.h style.cpp diff.h diff.cpp)
+add_library(libbarista2 sync.h sync.cpp api.h api.cpp html.h html.cpp style.h style.cpp diff.h diff.cpp)
 
 add_executable(main main.cpp)
 target_link_libraries(main libbarista2)

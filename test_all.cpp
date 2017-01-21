@@ -3,6 +3,7 @@
 
 #include "api.h"
 #include "html.h"
+#include "sync.h"
 #include "style.h"
 #include "test.h"
 
@@ -367,6 +368,13 @@ void TestHtmlDiffing() {
   //TestMixedHtmlDiffing();
 }
 
+void TestSyncer() {
+  auto host = sync::ElementUpdate(-1);
+  auto root = host.InsertChildElement(0);
+  root.SetTag("span");
+  root.InsertChildText(0, "Hello, World!");
+}
+
 int main() {
   cout << "Start tests" << endl;
   TestPrintTag();
@@ -380,6 +388,7 @@ int main() {
   TestBasicStatefulWidget();
   TestComputeLongestIncreasingSubsequence();
   TestHtmlDiffing();
+  TestSyncer();
   cout << "End tests" << endl;
   return 0;
 }
