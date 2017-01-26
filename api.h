@@ -5,7 +5,7 @@
 #ifndef BARISTA2_API_H
 #define BARISTA2_API_H
 
-#include "diff.h"
+#include "sync.h"
 
 #include <cassert>
 #include <functional>
@@ -67,13 +67,12 @@ class RenderNode {
   virtual void Detach() { _parent = nullptr; }
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
 
+  /// Returns `true` iff the new configuration is compatible with this node and
+  /// therefore it is legal to call [Update] with this configuration.
+  virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration) = 0;
+
   /// Updates this render node using [newConfiguration].
-  ///
-  /// Returns `true` if the new configuration is compatible with this node and
-  /// in which case the update was applied (including no-op update). Returns
-  /// `false` if and only if the new configuration is not compatible with this
-  /// render node.
-  virtual bool Update(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
 
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
   virtual void DispatchEvent(string type, string baristaId) = 0;
@@ -104,7 +103,7 @@ class RenderParent : public RenderNode {
   RenderParent(shared_ptr<Tree> tree);
   virtual bool GetHasDescendantsNeedingUpdate() { return _hasDescendantsNeedingUpdate; }
   virtual void ScheduleUpdate();
-  virtual bool Update(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
 
  private:
   bool _hasDescendantsNeedingUpdate = true;
@@ -150,7 +149,8 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
   RenderStatelessWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
   virtual void DispatchEvent(string type, string baristaId);
-  virtual bool Update(shared_ptr<Node> newConfiguration);
+  virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
@@ -173,7 +173,8 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
   virtual void VisitChildren(RenderNodeVisitor visitor);
   virtual void DispatchEvent(string type, string baristaId);
   virtual void ScheduleUpdate();
-  virtual bool Update(shared_ptr<Node> newConfiguration);
+  virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual shared_ptr<State> GetState() { return _state; }
   virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
@@ -188,7 +189,7 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
   RenderMultiChildParent(shared_ptr<Tree> tree) : RenderParent(tree) {}
 
   virtual void VisitChildren(RenderNodeVisitor visitor);
-  virtual bool Update(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual void PrintHtml(string &buf) {
     for (auto child : _currentChildren) {
       child->PrintHtml(buf);

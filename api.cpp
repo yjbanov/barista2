@@ -3,7 +3,7 @@
 //
 
 #include "api.h"
-#include "diff.h"
+#include "sync.h"
 
 #include <algorithm>
 #include <cassert>
@@ -37,10 +37,9 @@ bool operator==(const std::shared_ptr<Key> a, const std::shared_ptr<Key> b) {
 
 RenderNode::RenderNode(shared_ptr<Tree> tree) : _tree(tree) { }
 
-bool RenderNode::Update(shared_ptr<Node> newConfiguration) {
+void RenderNode::Update(shared_ptr<Node> newConfiguration, ElementUpdate& update) {
   assert(newConfiguration != nullptr);
   _configuration = newConfiguration;
-  return true;
 }
 
 
@@ -55,32 +54,24 @@ void RenderParent::ScheduleUpdate() {
   }
 }
 
-bool RenderParent::Update(shared_ptr<Node> newConfiguration) {
+void RenderParent::Update(shared_ptr<Node> newConfiguration, ElementUpdate& update) {
   _hasDescendantsNeedingUpdate = false;
-  RenderNode::Update(newConfiguration);
-  return true;
+  RenderNode::Update(newConfiguration, update);
 }
 
 string Tree::RenderFrame() {
-  GetHtmlDiff()->AssertReady();
+  auto treeUpdate = TreeUpdate();
 
-  ChildListDiff diff;
   if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
-    GetHtmlDiff()->Lock();
-    _topLevelNode->Update(_topLevelWidget);
-    string html;
-    _topLevelNode->PrintHtml(html);
-    diff.NewChild(0, html);
-    GetHtmlDiff()->Unlock();
-    diff.Render();
+    auto& rootInsertion = treeUpdate.CreateRootElement();
+    _topLevelNode->Update(_topLevelWidget, rootInsertion);
   } else {
-    diff.UpdateChild(0);
-    diff.Render();
-    _topLevelNode->Update(_topLevelWidget);
+    auto& rootUpdate = treeUpdate.UpdateRootElement();
+    _topLevelNode->Update(_topLevelWidget, rootUpdate);
   }
 
-  return GetHtmlDiff()->Finalize();
+  return treeUpdate.Render();
 }
 
 void Tree::VisitChildren(RenderNodeVisitor visitor) {
@@ -119,12 +110,15 @@ void RenderStatelessWidget::DispatchEvent(string type, string baristaId) {
   _child->DispatchEvent(type, baristaId);
 }
 
-bool RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
-  assert(configPtr != nullptr);
+bool RenderStatelessWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
+  assert(newConfiguration != nullptr);
+  auto oldConfiguration = GetConfiguration();
+  assert(oldConfiguration != nullptr);
+  return typeid(oldConfiguration) == typeid(newConfiguration);
+}
 
-  if (typeid(GetConfiguration()) != typeid(configPtr)) {
-    return false;
-  }
+void RenderStatelessWidget::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
+  assert(configPtr != nullptr);
 
   auto newConfiguration = static_pointer_cast<StatelessWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
@@ -132,23 +126,24 @@ bool RenderStatelessWidget::Update(shared_ptr<Node> configPtr) {
     // or replace with a new one.
     shared_ptr<Node> newChildConfiguration = newConfiguration->Build();
     if (_child != nullptr && _canUpdate(_child, newChildConfiguration)) {
-      _child->Update(newChildConfiguration);
+      _child->Update(newChildConfiguration, update);
     } else {
       // Replace child
       if (_child != nullptr) {
         _child->Detach();
       }
       _child = newChildConfiguration->Instantiate(GetTree());
-      _child->Update(newChildConfiguration);
+      _child->Update(newChildConfiguration, update);
       _child->Attach(shared_from_this());
     }
   } else if (GetHasDescendantsNeedingUpdate()) {
     assert(_child != nullptr);
     // Own configuration is the same, but some children are scheduled to be
     // updated.
-    _child->Update(_child->GetConfiguration());
+    _child->Update(_child->GetConfiguration(), update);
   }
-  return RenderParent::Update(newConfiguration);
+
+  RenderParent::Update(newConfiguration, update);
 }
 
 void RenderStatefulWidget::VisitChildren(RenderNodeVisitor visitor) {
@@ -165,12 +160,15 @@ void RenderStatefulWidget::DispatchEvent(string type, string baristaId) {
   _child->DispatchEvent(type, baristaId);
 }
 
-bool RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
-  assert(configPtr != nullptr);
+bool RenderStatefulWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
+  assert(newConfiguration != nullptr);
+  auto oldConfiguration = GetConfiguration();
+  assert(oldConfiguration != nullptr);
+  return typeid(oldConfiguration) == typeid(newConfiguration);
+}
 
-  if (typeid(GetConfiguration()) != typeid(configPtr)) {
-    return false;
-  }
+void RenderStatefulWidget::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
+  assert(configPtr != nullptr);
 
   auto newConfiguration = static_pointer_cast<StatefulWidget>(configPtr);
   if (GetConfiguration() != newConfiguration) {
@@ -181,25 +179,25 @@ bool RenderStatefulWidget::Update(shared_ptr<Node> configPtr) {
     internalSetStateNode(_state, shared_from_this());
     shared_ptr<Node> newChildConfiguration = _state->Build();
     if (_child != nullptr && _sameType(newChildConfiguration.get(), _child->GetConfiguration().get())) {
-      _child->Update(newChildConfiguration);
+      _child->Update(newChildConfiguration, update);
     } else {
       if (_child != nullptr) {
         _child->Detach();
       }
       _child = newChildConfiguration->Instantiate(GetTree());
-      _child->Update(newChildConfiguration);
+      _child->Update(newChildConfiguration, update);
       _child->Attach(shared_from_this());
     }
   } else if (_isDirty) {
-    _child->Update(_state->Build());
+    _child->Update(_state->Build(), update);
   } else if (GetHasDescendantsNeedingUpdate()) {
     // Own configuration is the same, but some children are scheduled to be
     // updated.
-    _child->Update(_child->GetConfiguration());
+    _child->Update(_child->GetConfiguration(), update);
   }
 
   _isDirty = false;
-  return RenderParent::Update(newConfiguration);
+  RenderParent::Update(newConfiguration, update);
 }
 
 void RenderMultiChildParent::VisitChildren(RenderNodeVisitor visitor) {
@@ -258,12 +256,8 @@ vector<int> ComputeLongestIncreasingSubsequence(vector<int> & sequence) {
   return lis;
 }
 
-bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
+void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
   assert(configPtr != nullptr);
-
-  if (!dynamic_pointer_cast<MultiChildNode>(configPtr)) {
-    return false;
-  }
 
   auto newConfiguration = static_pointer_cast<MultiChildNode>(configPtr);
   auto oldConfiguration = static_pointer_cast<MultiChildNode>(GetConfiguration());
@@ -271,14 +265,15 @@ bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   if (oldConfiguration == newConfiguration) {
     // No need to diff child lists.
     if (GetHasDescendantsNeedingUpdate()) {
-      for (auto child : _currentChildren) {
-        child->Update(child->GetConfiguration());
+      for (auto child = _currentChildren.begin(); child != _currentChildren.end(); child++) {
+        auto& childUpdate = update.UpdateChildElement(child - _currentChildren.begin());
+        (*child)->Update((*child)->GetConfiguration(), childUpdate);
       }
     }
-    return RenderParent::Update(configPtr);
+    RenderParent::Update(configPtr, update);
+    return;
   }
 
-  ChildListDiff diff;
   vector<shared_ptr<Node>> newChildren = newConfiguration->GetChildren();
 
   // A tuple with tracking information about a child node
@@ -314,30 +309,54 @@ bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   //           |                 |
   //           node              base index (or -1)
 
+  TrackedChildren::iterator afterLastUsedUnkeyedChild = currentChildren.begin();
   for (auto iter = newChildren.begin(); iter != newChildren.end(); iter++) {
     shared_ptr<Node> node = *iter;
     auto key = node->GetKey();
-    int baseIndex = -1;
+    TrackedChildren::iterator baseChild = currentChildren.end();
     if (key != nullptr) {
       auto baseEntry = keyMap.find(key->GetValue());
       if (baseEntry != keyMap.end()) {
-        TrackedChild baseChild = *(baseEntry->second);
-        baseIndex = get<1>(baseChild);
-        get<2>(baseChild) = true;
-        sequence.push_back(baseIndex);
+        baseChild = baseEntry->second;
+      }
+    } else {
+      // Start with afterLastUsedUnkeyedChild and scan until the first child
+      // we can update. Use it. This approach is naive. It does not support
+      // swaps, for example. It does support removes though. For swaps, the
+      // developer is expected to use keys anyway.
+      TrackedChildren::iterator scanner = afterLastUsedUnkeyedChild;
+      while(scanner != currentChildren.end()) {
+        shared_ptr<RenderNode> currentChild = *(get<0>(*scanner));
+        if (currentChild->CanUpdateUsing(node)) {
+          auto& childUpdate = update.UpdateChildElement(get<1>(*scanner));
+          currentChild->Update(node, childUpdate);
+          baseChild = scanner;
+          afterLastUsedUnkeyedChild = scanner + 1;
+          break;
+        }
+        scanner++;
       }
     }
+
+    int baseIndex = -1;
+
+    if (baseChild != currentChildren.end()) {
+      baseIndex = get<1>(*baseChild);
+      get<2>(*baseChild) = true;
+      sequence.push_back(baseIndex);
+    }
+
     targetList.push_back({node, baseIndex});
   }
 
   // Compute removes
   for (auto i = currentChildren.begin(); i != currentChildren.end(); i++) {
     if (!get<2>(*i)) {
-      diff.Remove((int) (i - currentChildren.begin()));
+      update.RemoveChild((int) (i - currentChildren.begin()));
     }
   }
 
-  // Compute inserts
+  // Compute inserts and updates
   vector<int> lis = ComputeLongestIncreasingSubsequence(sequence);
   auto insertionPoint = lis.begin();
   vector<shared_ptr<RenderNode>> newChildVector;
@@ -362,21 +381,14 @@ bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
       shared_ptr<Node> childNode = get<0>(*targetEntry);
 
       // Lock the diff object so child nodes do not push diffs.
-      bool wasLocked = GetHtmlDiff()->IsLocked();
-      GetHtmlDiff()->Lock();
+      auto& childInsertion = update.InsertChildElement(insertionIndex);
       auto childRenderNode = childNode->Instantiate(GetTree());
       newChildVector.push_back(childRenderNode);
-      childRenderNode->Update(childNode);
+      childRenderNode->Update(childNode, childInsertion);
       childRenderNode->Attach(shared_from_this());
-      if (!wasLocked) {
-        string html;
-        childRenderNode->PrintHtml(html);
-        diff.NewChild(insertionIndex, html);
-        GetHtmlDiff()->Unlock();
-      }
     } else if (baseIndex != insertionIndex) {
       // Moved child
-      diff.Move(insertionIndex, baseIndex);
+      update.MoveChild(insertionIndex, baseIndex);
       newChildVector.push_back(_currentChildren[baseIndex]);
     } else {
       newChildVector.push_back(_currentChildren[baseIndex]);
@@ -384,11 +396,7 @@ bool RenderMultiChildParent::Update(shared_ptr<Node> configPtr) {
   }
   _currentChildren = newChildVector;
 
-  if (GetHtmlDiff()->IsNotLocked()) {
-    diff.Render();
-  }
-
-  return RenderParent::Update(configPtr);
+  RenderParent::Update(configPtr, update);
 }
 
 }

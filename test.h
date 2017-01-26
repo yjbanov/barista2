@@ -11,6 +11,7 @@ template<typename T> void Expect(T actual, T expected);
 template<typename E> void ExpectVector(vector<E> actual, vector<E> expected);
 
 void ExpectHtml(shared_ptr<Tree>, string);
-void ExpectDiff(shared_ptr<Tree> tree, HtmlDiff& expected);
+void ExpectUpdate(shared_ptr<Tree> tree, shared_ptr<ElementUpdate> expected);
+void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected);
 
 #endif //BARISTA2_TEST_H

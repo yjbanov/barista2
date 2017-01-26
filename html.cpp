@@ -21,20 +21,45 @@ void Element::AddEventListener(string type, EventListener listener) {
   _eventListeners.push_back(EventListenerConfig(type, listener));
 }
 
-bool RenderElement::Update(shared_ptr<Node> configPtr) {
-  if (dynamic_pointer_cast<shared_ptr<Element>>(configPtr)) {
+bool RenderElement::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
+  assert(newConfiguration != nullptr);
+  assert(GetConfiguration() != nullptr);
+  // TODO: figure out why dynamic_pointer_cast doesn't work.
+  if (!dynamic_cast<Element*>(newConfiguration.get())) {
     return false;
   }
 
+  shared_ptr<Element> element = static_pointer_cast<Element>(newConfiguration);
   if (GetConfiguration() != nullptr) {
     shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
-    shared_ptr<Element> element = static_pointer_cast<Element>(configPtr);
     if (config->GetTag() != element->GetTag()) {
       return false;
     }
   }
+  return true;
+}
 
-  return RenderMultiChildParent::Update(configPtr);
+void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
+  // TODO: figure out why dynamic_pointer_cast doesn't work
+  assert(dynamic_cast<Element*>(configPtr.get()) != nullptr);
+
+  shared_ptr<Element> newConfiguration = static_pointer_cast<Element>(configPtr);
+  shared_ptr<Element> oldConfiguration = static_pointer_cast<Element>(GetConfiguration());
+  if (GetConfiguration() != nullptr) {
+    shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
+    if (oldConfiguration->_text != newConfiguration->_text) {
+      update.SetText(newConfiguration->_text);
+    }
+  } else {
+    update.SetTag(newConfiguration->GetTag());
+    auto key = newConfiguration->GetKey();
+    if (key != nullptr) {
+      update.SetKey(key->GetValue());
+    }
+    update.SetText(newConfiguration->_text);
+  }
+
+  RenderMultiChildParent::Update(configPtr, update);
 }
 
 void RenderElement::DispatchEvent(string type, string baristaId) {
@@ -78,20 +103,21 @@ void RenderElement::PrintHtml(string &buf) {
     buf += "\"";
   }
   buf += ">";
+  if (conf->_text != "") {
+    buf += conf->_text;
+  }
   RenderMultiChildParent::PrintHtml(buf);
   buf += "</" + conf->_tag + ">";
-}
-
-shared_ptr<RenderNode> Text::Instantiate(shared_ptr<Tree> tree) {
-  return make_shared<RenderText>(tree);
 }
 
 shared_ptr<Element> El(string tag) {
   return make_shared<Element>(tag);
 }
 
-shared_ptr<Text> Tx(string value) {
-  return make_shared<Text>(value);
+shared_ptr<Element> Tx(string value) {
+  auto span = make_shared<Element>("span");
+  span->SetText(value);
+  return span;
 }
 
 } // namespace barista

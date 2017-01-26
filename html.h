@@ -31,6 +31,7 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
   void AddEventListener(string type, EventListener listener);
   void AddStyle(Style &style) { AddClassName(style.GetIdentifierClass()); }
   void AddClassName(string className) { _classNames.push_back(className); }
+  void SetText(string text) { _text = text; }
 
  private:
   // Monotonically increasing element ID counter.
@@ -55,6 +56,9 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
   // User-defined CSS class names.
   vector<string> _classNames;
 
+  // Text inside the element.
+  string _text = "";
+
   // Barista ID.
   //
   // Used to uniquely identify this element when dispatching events.
@@ -69,35 +73,15 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
 class RenderElement : public RenderMultiChildParent {
  public:
   RenderElement(shared_ptr<Tree> tree) : RenderMultiChildParent(tree) {}
-  bool Update(shared_ptr<Node> newConfiguration);
+  virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
+  virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual void DispatchEvent(string type, string baristaId);
   virtual void PrintHtml(string &buf);
 };
 
-class Text : public Node {
- public:
-  Text(string value) : _value(value), Node() {}
-  virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree);
-  string GetValue() { return _value; }
-
- private:
-  string _value;
-};
-
-class RenderText : public RenderNode {
- public:
-  RenderText(shared_ptr<Tree> tree) : RenderNode(tree) {}
-  virtual void VisitChildren(RenderNodeVisitor visitor) {}
-  virtual void DispatchEvent(string type, string baristaId) {}
-  virtual void PrintHtml(string &buf) {
-    auto conf = static_pointer_cast<Text>(GetConfiguration());
-    buf += conf->GetValue();
-  }
-};
-
 // A little boilerplate-reducing DSL
 shared_ptr<Element> El(string tag);
-shared_ptr<Text> Tx(string value);
+shared_ptr<Element> Tx(string value);
 
 }
 

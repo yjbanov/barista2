@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "api.h"
+#include "sync.h"
 
 using namespace std;
 using namespace barista;
@@ -10,6 +11,8 @@ void Expect(T actual, T expected) {
   if (actual != expected) {
     cout << "Test failed:\n  Expected: " << expected << "\n  Was: " << actual << endl;
     exit(1);
+  } else {
+    cout << "PASSED: " << expected << endl;
   }
 }
 
@@ -65,7 +68,14 @@ void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
   Expect(*html, expectedHtml);
 }
 
-void ExpectDiff(shared_ptr<Tree> tree, HtmlDiff& expected) {
+void ExpectUpdate(shared_ptr<Tree> tree, shared_ptr<ElementUpdate> expected) {
   auto diff = tree->RenderFrame();
-  Expect(diff, expected.ComputeDiff());
+  stringstream buf;
+  expected->Render(buf);
+  Expect(diff, buf.str());
+}
+
+void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected) {
+  auto diff = tree->RenderFrame();
+  Expect(diff, expected.Render());
 }
