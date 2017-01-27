@@ -68,14 +68,7 @@ void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
   Expect(*html, expectedHtml);
 }
 
-void ExpectUpdate(shared_ptr<Tree> tree, shared_ptr<ElementUpdate> expected) {
-  auto diff = tree->RenderFrame();
-  stringstream buf;
-  expected->Render(buf);
-  Expect(diff, buf.str());
-}
-
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected) {
-  auto diff = tree->RenderFrame();
-  Expect(diff, expected.Render());
+  auto diff = tree->RenderFrame(2);
+  Expect(diff, expected.Render(2));
 }

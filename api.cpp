@@ -59,7 +59,7 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration, ElementUpdate& upda
   RenderNode::Update(newConfiguration, update);
 }
 
-string Tree::RenderFrame() {
+string Tree::RenderFrame(int indent) {
   auto treeUpdate = TreeUpdate();
 
   if (_topLevelNode == nullptr) {
@@ -71,7 +71,7 @@ string Tree::RenderFrame() {
     _topLevelNode->Update(_topLevelWidget, rootUpdate);
   }
 
-  return treeUpdate.Render();
+  return treeUpdate.Render(indent);
 }
 
 void Tree::VisitChildren(RenderNodeVisitor visitor) {

@@ -7,6 +7,7 @@
 #include "sync.h"
 #include "style.h"
 #include "test.h"
+#include "lib/json/src/json.hpp"
 
 using namespace std;
 using namespace barista;
@@ -369,17 +370,45 @@ void TestHtmlDiffing() {
   TestUnkeyedHtmlDiffing();
 }
 
-void TestSyncer() {
-  cout << "TestSyncer" << endl;
+void TestSyncerCreate() {
+  cout << "TestSyncerCreate" << endl;
 
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.CreateRootElement();
   rootUpdate.SetTag("div");
   rootUpdate.SetKey("a");
+  rootUpdate.SetText("hello");
+
+  nlohmann::json j;
+  j["create"] = "<div _bkey=\"a\">hello</div>";
 
   Expect(
-    treeUpdate.Render(),
-    string("{\"create\":\"<div _bkey=\"a\"></div>\"}")
+    treeUpdate.Render(2),
+    j.dump(2)
+  );
+
+  cout << "Success" << endl;
+}
+
+void TestSyncerUpdate() {
+  cout << "TestSyncerUpdate" << endl;
+
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  rootUpdate.SetTag("div");
+  rootUpdate.SetKey("a");
+  rootUpdate.SetText("hello");
+
+  nlohmann::json j;
+  j["update"] = {
+      {"tag", "div"},
+      {"text", "hello"},
+      {"index", 0},
+  };
+
+  Expect(
+      treeUpdate.Render(2),
+      j.dump(2)
   );
 
   cout << "Success" << endl;
@@ -387,7 +416,8 @@ void TestSyncer() {
 
 int main() {
   cout << "Start tests" << endl;
-  TestSyncer();
+  TestSyncerCreate();
+  TestSyncerUpdate();
   TestPrintTag();
   TestPrintText();
   TestPrintElementWithChildren();

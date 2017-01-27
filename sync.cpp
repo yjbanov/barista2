@@ -3,6 +3,7 @@
 //
 
 #include "sync.h"
+#include "lib/json/src/json.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -17,93 +18,94 @@ using namespace std;
 
 namespace barista {
 
-bool ElementUpdate::Render(stringstream &buf) {
-  buf << "{";
-
-  buf << "\"index\":\"" << _index << "\",";
-
+bool ElementUpdate::Render(nlohmann::json& js) {
   bool wroteData = false;
+
   if (_tag != "") {
-    buf << "\"tag\":\"" << _tag << "\",";
+    js["tag"] = _tag;
     wroteData = true;
   }
 
   if (_updateText) {
-    buf << "\"text\":\"" << _text << "\",";
+    js["text"] = _text;
     wroteData = true;
   }
 
   if (!_removes.empty()) {
-    buf << "\"remove\": [";
+    auto jsRemoves = nlohmann::json::array();
     for (int index : _removes) {
-      buf << index << ",";
+      jsRemoves.push_back(index);
     }
-    buf << "],";
+    js["remove"] = jsRemoves;
     wroteData = true;
   }
 
   if (!_moves.empty()) {
-    buf << "\"move\":[";
+    auto jsMoves = nlohmann::json::array();
     for (Move move : _moves) {
-      buf << move.GetInsertionIndex() << "," << move.GetMoveFromIndex() << ",";
+      jsMoves.push_back(move.GetInsertionIndex());
+      jsMoves.push_back(move.GetMoveFromIndex());
     }
-    buf << "],";
+    js["move"] = jsMoves;
     wroteData = true;
   }
 
   if (!_childElementInsertions.empty()) {
-    buf << "\"insert\":[";
+    auto jsInsertions = nlohmann::json::array();
     for (ElementUpdate& insertion : _childElementInsertions) {
-      buf << "{";
-      buf << "\"index\":" << insertion._index << ",";
-      buf << "\"html\":\"";
+      auto jsInsertion = nlohmann::json::object();
+      jsInsertion["index"] = insertion._index;
+      stringstream buf;
       insertion.PrintHtml(buf);
-      buf << "\",";
-      buf << "},";
+      jsInsertion["html"] = buf.str();
+      jsInsertions.push_back(jsInsertion);
     }
-    buf << "],";
+    js["insert"] = jsInsertions;
     wroteData = true;
   }
 
   if (!_childElementUpdates.empty()) {
-    bool hasChildUpdates = false;
-    stringstream subBuf;
+    auto jsUpdates = nlohmann::json::array();
     for (ElementUpdate& update : _childElementUpdates) {
-      bool nonTrivialUpdate = update.Render(subBuf);
-      hasChildUpdates = hasChildUpdates || nonTrivialUpdate;
-      subBuf << ",";
+      auto childUpdate = nlohmann::json::object();
+      if (update.Render(childUpdate)) {
+        jsUpdates.push_back(childUpdate);
+      }
     }
-    if (hasChildUpdates) {
-      buf << "\"update-elements\":[" << subBuf.str() << "],";
+
+    if (jsUpdates.size() > 0) {
+      jsUpdates["update-elements"] = jsUpdates;
       wroteData = true;
     }
   }
 
   if (!_childTextInsertions.empty()) {
-    buf << "\"insert-text\":[";
+    auto jsInsertions = nlohmann::json::array();
     for (tuple<int, string> textInsertion : _childTextInsertions) {
-      buf << "{";
-      buf << "\"index\":" << get<0>(textInsertion);
-      buf << "\"text\":\"" << get<1>(textInsertion) << "\",";
-      buf << "},";
+      auto jsInsertion = nlohmann::json::object();
+      jsInsertion["index"] = get<0>(textInsertion);
+      jsInsertion["text"] = get<1>(textInsertion);
+      jsInsertions.push_back(jsInsertion);
     }
-    buf << "],";
+    js["insert-text"] = jsInsertions;
     wroteData = true;
   }
 
   if (!_childTextUpdates.empty()) {
-    buf << "\"update-text\":[";
+    auto jsTextUpdates = nlohmann::json::array();
     for (tuple<int, string> textUpdate : _childTextInsertions) {
-      buf << "{";
-      buf << "\"index\":" << get<0>(textUpdate);
-      buf << "\"text\":\"" << get<1>(textUpdate) << "\",";
-      buf << "},";
+      auto jsInsertion = nlohmann::json::object();
+      jsInsertion["index"] = get<0>(textUpdate);
+      jsInsertion["text"] = get<1>(textUpdate);
+      jsTextUpdates.push_back(jsInsertion);
     }
-    buf << "],";
+    js["update-text"] = jsTextUpdates;
     wroteData = true;
   }
 
-  buf << "}";
+  if (wroteData) {
+    js["index"] = _index;
+  }
 
   return wroteData;
 }

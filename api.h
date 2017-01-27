@@ -90,7 +90,10 @@ class Tree : public enable_shared_from_this<Tree> {
   void VisitChildren(RenderNodeVisitor visitor);
   virtual void DispatchEvent(string type, string baristaId);
   // Applies state changes and produces a serialize HTML diff.
-  string RenderFrame();
+  string RenderFrame() {
+    return RenderFrame(0);
+  }
+  string RenderFrame(int indent);
   void PrintHtml(string &buf);
 
  private:

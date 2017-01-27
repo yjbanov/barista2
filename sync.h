@@ -6,6 +6,7 @@
 #define BARISTA2_SYNC_H_H
 
 #include "common.h"
+#include "lib/json/src/json.hpp"
 
 #include <string>
 #include <vector>
@@ -33,7 +34,7 @@ private:
 class ElementUpdate {
 public:
   /// Appends the JSON representation of this update into [buffer].
-  bool Render(stringstream &buffer);
+  bool Render(nlohmann::json& js);
 
   /// Assumes that this element update is exlusively made of insertions and
   /// renders it as a plain HTML into the given [buffer].
@@ -116,15 +117,21 @@ class TreeUpdate {
   }
 
   string Render() {
-    stringstream json;
+    return Render(0);
+  }
+
+  string Render(int indent) {
+    nlohmann::json js;
     if (_createMode) {
-      json << "{\"create\":\"";
-      _rootUpdate.PrintHtml(json);
-      json << "\"}";
+      stringstream html;
+      _rootUpdate.PrintHtml(html);
+      js["create"] = html.str();
     } else {
-      _rootUpdate.Render(json);
+      nlohmann::json jsRootUpdate;
+      _rootUpdate.Render(jsRootUpdate);
+      js["update"] = jsRootUpdate;
     }
-    return json.str();
+    return js.dump(indent);
   }
 
  private:
