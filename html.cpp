@@ -50,6 +50,27 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
     if (oldConfiguration->_text != newConfiguration->_text) {
       update.SetText(newConfiguration->_text);
     }
+    auto& newAttrs = newConfiguration->_attributes;
+    auto& oldAttrs = oldConfiguration->_attributes;
+    if (newAttrs != oldAttrs) {
+      // Find updates
+      for (auto attr = newAttrs.begin(); attr != newAttrs.end(); attr++) {
+        auto name = attr->first;
+        auto newValue = attr->second;
+        auto oldValueIter = oldAttrs.find(name);
+        if (oldValueIter == oldAttrs.end() || newValue != oldValueIter->second) {
+          update.SetAttribute(attr->first, attr->second);
+        }
+      }
+
+      // Find removes
+      for (auto attr = oldAttrs.begin(); attr != oldAttrs.end(); attr++) {
+        auto name = attr->first;
+        if (newAttrs.find(name) == newAttrs.end()) {
+          update.SetAttribute(attr->first, "");
+        }
+      }
+    }
   } else {
     update.SetTag(newConfiguration->GetTag());
     auto key = newConfiguration->GetKey();
@@ -57,6 +78,13 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
       update.SetKey(key->GetValue());
     }
     update.SetText(newConfiguration->_text);
+    if (newConfiguration->_attributes.size() > 0) {
+      auto first = newConfiguration->_attributes.begin();
+      auto last = newConfiguration->_attributes.end();
+      for (auto attr = first; attr != last; attr++) {
+        update.SetAttribute(attr->first, attr->second);
+      }
+    }
   }
 
   RenderMultiChildParent::Update(configPtr, update);

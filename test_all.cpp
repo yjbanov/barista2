@@ -76,113 +76,6 @@ class BasicStatefulWidgetTest : public StatefulWidget {
   }
 };
 
-void TestPrintTag() {
-  cout << "TestPrintTag" << endl;
-  auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
-  ExpectHtml(tree, "<div></div>");
-  cout << "Success" << endl;
-}
-
-void TestPrintText() {
-  cout << "TestPrintText" << endl;
-  auto tree = make_shared<Tree>(Tx("hello"));
-  ExpectHtml(tree, "<span>hello</span>");
-  cout << "Success" << endl;
-}
-
-void TestPrintElementWithChildren() {
-  cout << "TestPrintElementWithChildren" << endl;
-  auto tree = make_shared<Tree>(make_shared<ElementWithChildrenTest>());
-  ExpectHtml(tree, "<div><span>hello</span><span></span></div>");
-  cout << "Success" << endl;
-}
-
-void TestPrintElementWithAttrs() {
-  cout << "TestPrintElementWithAttrs" << endl;
-  auto tree = make_shared<Tree>(make_shared<ElementWithAttrsTest>());
-  ExpectHtml(tree, "<div id=\"foo\"></div>");
-  cout << "Success" << endl;
-}
-
-void TestEventListener() {
-  cout << "TestEventListener" << endl;
-  auto widget = make_shared<EventListenerTest>();
-  auto tree = make_shared<Tree>(widget);
-  ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
-  Expect((int) widget->eventLog.size(), 0);
-  tree->DispatchEvent("click", "1");
-  Expect((int) widget->eventLog.size(), 1);
-  tree->DispatchEvent("scroll", "1");
-  Expect((int) widget->eventLog.size(), 1);
-  cout << "Success" << endl;
-}
-
-void TestClasses() {
-  cout << "TestClasses" << endl;
-  auto elem = make_shared<Element>("div");
-  elem->AddClassName("foo");
-  elem->AddClassName("bar");
-  auto tree = make_shared<Tree>(elem);
-  ExpectHtml(tree, "<div class=\"foo bar\"></div>");
-  cout << "Success" << endl;
-}
-
-void TestStyleBasics() {
-  cout << "TestStyleBasics" << endl;
-  Style::DangerouslyResetIdCounterForTesting();
-  vector<StyleAttribute> attrs = {
-      {"padding", "5px"},
-      {"margin", "8px"},
-  };
-  Style s = style(attrs);
-  Expect(s.GetCss(), string("padding: 5px;\nmargin: 8px;\n"));
-  cout << "Success" << endl;
-}
-
-void TestStyleApplication() {
-  cout << "TestStyleApplication" << endl;
-  Style::DangerouslyResetIdCounterForTesting();
-  vector<StyleAttribute> attrs = { };
-  Style s1 = style(attrs);
-  Style s2 = style(attrs);
-
-  auto elem = make_shared<Element>("div");
-  elem->AddStyle(s1);
-  elem->AddStyle(s2);
-  elem->AddClassName("foo");
-  auto tree = make_shared<Tree>(elem);
-  ExpectHtml(tree, "<div class=\"_s1 _s2 foo\"></div>");
-  cout << "Success" << endl;
-}
-
-void TestBasicStatefulWidget() {
-  cout << "TestBasicStatefulWidget" << endl;
-  auto widget = make_shared<BasicStatefulWidgetTest>();
-  auto tree = make_shared<Tree>(widget);
-  ExpectHtml(tree, "<span>Hello</span>");
-  widget->state->label = "World";
-  ExpectHtml(tree, "<span>Hello</span>");
-  widget->state->ScheduleUpdate();
-  ExpectHtml(tree, "<span>World</span>");
-  cout << "Success" << endl;
-}
-
-void TestKeyedCreateRootDiff() {
-  cout << "TestKeyedCreateRootDiff" << endl;
-
-  auto treeUpdate = TreeUpdate();
-  auto& rootUpdate = treeUpdate.CreateRootElement();
-  rootUpdate.SetTag("div");
-  rootUpdate.SetKey("a");
-
-  auto div = make_shared<Element>("div");
-  div->SetKey(make_shared<Key>("a"));
-  auto tree = make_shared<Tree>(div);
-  ExpectTreeUpdate(tree, treeUpdate);
-
-  cout << "Success" << endl;
-}
-
 class CreateFirstChildDiffState : public State {
  public:
   bool withChild = false;
@@ -207,23 +100,6 @@ class CreateFirstChildDiffTest : public StatefulWidget {
     return state = make_shared<CreateFirstChildDiffState>();
   }
 };
-
-void TestKeyedCreateFirstChildDiff() {
-  cout << "TestKeyedCreateFirstChildDiff" << endl;
-  auto treeUpdate = TreeUpdate();
-  auto& rootUpdate = treeUpdate.UpdateRootElement();
-  auto& childUpdate = rootUpdate.InsertChildElement(0);
-  childUpdate.SetTag("span");
-  childUpdate.SetKey("child");
-
-  auto widget = make_shared<CreateFirstChildDiffTest>();
-  auto tree = make_shared<Tree>(widget);
-  tree->RenderFrame();
-  widget->state->withChild = true;
-  widget->state->ScheduleUpdate();
-  ExpectTreeUpdate(tree, treeUpdate);
-  cout << "Success" << endl;
-}
 
 class BeforeAfterTestState : public State {
  public:
@@ -257,9 +133,110 @@ class BeforeAfterTest : public StatefulWidget {
   shared_ptr<BeforeAfterTestState> _state;
 };
 
-void TestKeyedRemoveOnlyChildDiff() {
-  cout << "TestKeyedRemoveOnlyChildDiff" << endl;
 
+
+TEST(TestPrintTag)
+  auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
+  ExpectHtml(tree, "<div></div>");
+END_TEST
+
+TEST(TestPrintText)
+  auto tree = make_shared<Tree>(Tx("hello"));
+  ExpectHtml(tree, "<span>hello</span>");
+END_TEST
+
+TEST(TestPrintElementWithChildren)
+  auto tree = make_shared<Tree>(make_shared<ElementWithChildrenTest>());
+  ExpectHtml(tree, "<div><span>hello</span><span></span></div>");
+END_TEST
+
+TEST(TestPrintElementWithAttrs)
+  auto tree = make_shared<Tree>(make_shared<ElementWithAttrsTest>());
+  ExpectHtml(tree, "<div id=\"foo\"></div>");
+END_TEST
+
+TEST(TestEventListener)
+  auto widget = make_shared<EventListenerTest>();
+  auto tree = make_shared<Tree>(widget);
+  ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
+  Expect((int) widget->eventLog.size(), 0);
+  tree->DispatchEvent("click", "1");
+  Expect((int) widget->eventLog.size(), 1);
+  tree->DispatchEvent("scroll", "1");
+  Expect((int) widget->eventLog.size(), 1);
+END_TEST
+
+TEST(TestClasses)
+  auto elem = make_shared<Element>("div");
+  elem->AddClassName("foo");
+  elem->AddClassName("bar");
+  auto tree = make_shared<Tree>(elem);
+  ExpectHtml(tree, "<div class=\"foo bar\"></div>");
+END_TEST
+
+TEST(TestStyleBasics)
+  Style::DangerouslyResetIdCounterForTesting();
+  vector<StyleAttribute> attrs = {
+      {"padding", "5px"},
+      {"margin", "8px"},
+  };
+  Style s = style(attrs);
+  Expect(s.GetCss(), string("padding: 5px;\nmargin: 8px;\n"));
+END_TEST
+
+TEST(TestStyleApplication)
+  Style::DangerouslyResetIdCounterForTesting();
+  vector<StyleAttribute> attrs = { };
+  Style s1 = style(attrs);
+  Style s2 = style(attrs);
+
+  auto elem = make_shared<Element>("div");
+  elem->AddStyle(s1);
+  elem->AddStyle(s2);
+  elem->AddClassName("foo");
+  auto tree = make_shared<Tree>(elem);
+  ExpectHtml(tree, "<div class=\"_s1 _s2 foo\"></div>");
+END_TEST
+
+TEST(TestBasicStatefulWidget)
+  auto widget = make_shared<BasicStatefulWidgetTest>();
+  auto tree = make_shared<Tree>(widget);
+  ExpectHtml(tree, "<span>Hello</span>");
+  widget->state->label = "World";
+  ExpectHtml(tree, "<span>Hello</span>");
+  widget->state->ScheduleUpdate();
+  ExpectHtml(tree, "<span>World</span>");
+  cout << "Success" << endl;
+END_TEST
+
+TEST(TestKeyedCreateRootDiff)
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.CreateRootElement();
+  rootUpdate.SetTag("div");
+  rootUpdate.SetKey("a");
+
+  auto div = make_shared<Element>("div");
+  div->SetKey(make_shared<Key>("a"));
+  auto tree = make_shared<Tree>(div);
+  ExpectTreeUpdate(tree, treeUpdate);
+END_TEST
+
+TEST(TestKeyedCreateFirstChildDiff)
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  auto& childUpdate = rootUpdate.InsertChildElement(0);
+  childUpdate.SetTag("span");
+  childUpdate.SetKey("child");
+
+  auto widget = make_shared<CreateFirstChildDiffTest>();
+  auto tree = make_shared<Tree>(widget);
+  tree->RenderFrame();
+  widget->state->withChild = true;
+  widget->state->ScheduleUpdate();
+  ExpectTreeUpdate(tree, treeUpdate);
+END_TEST
+
+TEST(TestKeyedRemoveOnlyChildDiff)
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.UpdateRootElement();
   rootUpdate.RemoveChild(0);
@@ -274,13 +251,9 @@ void TestKeyedRemoveOnlyChildDiff() {
   auto after = make_shared<Element>("div");
   after->SetKey(make_shared<Key>("parent"));
   test->ExpectStateDiff(after, treeUpdate);
+END_TEST
 
-  cout << "Success" << endl;
-}
-
-void TestIdenticalRebuild() {
-  cout << "TestIdenticalRebuild" << endl;
-
+TEST(TestIdenticalRebuild)
   auto before = make_shared<Element>("div");
   auto beforeChild = make_shared<Element>("span");
   before->AddChild(beforeChild);
@@ -292,17 +265,13 @@ void TestIdenticalRebuild() {
 
   auto update = TreeUpdate();
   test->ExpectStateDiff(after, update);
-
-  cout << "Success" << endl;
-}
+END_TEST
 
 void ExpectLis(vector<int> input, vector<int> output) {
   ExpectVector(ComputeLongestIncreasingSubsequence(input), output);
 }
 
-void TestComputeLongestIncreasingSubsequence() {
-  cout << "TestComputeLongestIncreasingSubsequence" << endl;
-
+TEST(TestComputeLongestIncreasingSubsequence)
   // trivial
   ExpectLis({}, {});
   ExpectLis({1}, {1});
@@ -316,13 +285,9 @@ void TestComputeLongestIncreasingSubsequence() {
   // shifts
   ExpectLis({1, 2, 3, 4, 5, 0}, {1, 2, 3, 4, 5});
   ExpectLis({5, 0, 1, 2, 3, 4}, {0, 1, 2, 3, 4});
+END_TEST
 
-  cout << "Success" << endl;
-}
-
-void TestUnkeyedCreateRootDiff() {
-  cout << "TestUnkeyedCreateRootDiff" << endl;
-
+TEST(TestUnkeyedCreateRootDiff)
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.CreateRootElement();
   rootUpdate.SetTag("div");
@@ -330,13 +295,9 @@ void TestUnkeyedCreateRootDiff() {
   auto div = make_shared<Element>("div");
   auto tree = make_shared<Tree>(div);
   ExpectTreeUpdate(tree, treeUpdate);
+END_TEST
 
-  cout << "Success" << endl;
-}
-
-void TestUnkeyedCreateFirstChildDiff() {
-  cout << "TestUnkeyedCreateFirstChildDiff" << endl;
-
+TEST(TestUnkeyedCreateFirstChildDiff)
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.UpdateRootElement();
   auto& childUpdate = rootUpdate.InsertChildElement(0);
@@ -349,9 +310,7 @@ void TestUnkeyedCreateFirstChildDiff() {
   auto afterChild = make_shared<Element>("span");
   after->AddChild(afterChild);
   test->ExpectStateDiff(after, treeUpdate);
-
-  cout << "Success" << endl;
-}
+END_TEST
 
 void TestKeyedHtmlDiffing() {
   TestKeyedCreateRootDiff();
@@ -370,49 +329,86 @@ void TestHtmlDiffing() {
   TestUnkeyedHtmlDiffing();
 }
 
-void TestSyncerCreate() {
-  cout << "TestSyncerCreate" << endl;
-
+TEST(TestSyncerCreate)
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.CreateRootElement();
   rootUpdate.SetTag("div");
   rootUpdate.SetKey("a");
   rootUpdate.SetText("hello");
+  rootUpdate.SetAttribute("a", "b");
+  rootUpdate.SetAttribute("c", "d");
 
   nlohmann::json j;
-  j["create"] = "<div _bkey=\"a\">hello</div>";
+  j["create"] = "<div _bkey=\"a\" a=\"b\" c=\"d\">hello</div>";
 
   Expect(
     treeUpdate.Render(2),
     j.dump(2)
   );
+END_TEST
 
-  cout << "Success" << endl;
-}
-
-void TestSyncerUpdate() {
-  cout << "TestSyncerUpdate" << endl;
-
+TEST(TestSyncerUpdate)
   auto treeUpdate = TreeUpdate();
   auto& rootUpdate = treeUpdate.UpdateRootElement();
   rootUpdate.SetTag("div");
   rootUpdate.SetKey("a");
   rootUpdate.SetText("hello");
+  rootUpdate.SetAttribute("a", "b");
 
   nlohmann::json j;
   j["update"] = {
       {"tag", "div"},
       {"text", "hello"},
       {"index", 0},
+      {"attrs", {
+          {"a", "b"}
+      }}
   };
 
   Expect(
       treeUpdate.Render(2),
       j.dump(2)
   );
+END_TEST
 
-  cout << "Success" << endl;
-}
+TEST(TestAttrsCreate)
+  auto treeUpdate = TreeUpdate();
+  auto &rootUpdate = treeUpdate.CreateRootElement();
+  rootUpdate.SetTag("div");
+  rootUpdate.SetAttribute("id", "1");
+  rootUpdate.SetAttribute("style", "hidden: true;");
+
+  auto div = make_shared<Element>("div");
+  div->SetAttribute("id", "1");
+  div->SetAttribute("style", "hidden: true;");
+  auto tree = make_shared<Tree>(div);
+  ExpectTreeUpdate(tree, treeUpdate);
+END_TEST
+
+TEST(TestAttrsUpdate)
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  auto& childUpdate = rootUpdate.UpdateChildElement(0);
+  childUpdate.SetAttribute("update", "a");
+  childUpdate.SetAttribute("create", "b");
+  childUpdate.SetAttribute("remove", "");
+
+  auto before = make_shared<Element>("div");
+  auto beforeChild = make_shared<Element>("span");
+  beforeChild->SetAttribute("unchanged", "u");
+  beforeChild->SetAttribute("update", "z");
+  beforeChild->SetAttribute("remove", "y");
+  before->AddChild(beforeChild);
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = make_shared<Element>("div");
+  auto afterChild = make_shared<Element>("span");
+  afterChild->SetAttribute("unchanged", "u");
+  afterChild->SetAttribute("update", "a");
+  afterChild->SetAttribute("create", "b");
+  after->AddChild(afterChild);
+  test->ExpectStateDiff(after, treeUpdate);
+END_TEST
 
 int main() {
   cout << "Start tests" << endl;
@@ -429,6 +425,8 @@ int main() {
   TestBasicStatefulWidget();
   TestComputeLongestIncreasingSubsequence();
   TestHtmlDiffing();
+  TestAttrsCreate();
+  TestAttrsUpdate();
   cout << "End tests" << endl;
   return 0;
 }

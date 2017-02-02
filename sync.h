@@ -67,6 +67,9 @@ public:
   void SetTag(string tag) { _tag = tag; }
   void SetKey(string key) { _key = key; }
   void SetText(string text) { _text = text; _updateText = true; }
+  void SetAttribute(string name, string value) {
+    _attributes.push_back({name, value});
+  }
 
 private:
   ElementUpdate(int index) : _index(index) { };
@@ -94,6 +97,7 @@ private:
   //           child index
   //           |
   vector<tuple<int, string>> _childTextUpdates;
+  vector<tuple<string, string>> _attributes;
 
   PRIVATE_COPY_AND_ASSIGN(ElementUpdate);
 

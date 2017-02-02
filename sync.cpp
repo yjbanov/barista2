@@ -74,7 +74,7 @@ bool ElementUpdate::Render(nlohmann::json& js) {
     }
 
     if (jsUpdates.size() > 0) {
-      jsUpdates["update-elements"] = jsUpdates;
+      js["update-elements"] = jsUpdates;
       wroteData = true;
     }
   }
@@ -103,6 +103,15 @@ bool ElementUpdate::Render(nlohmann::json& js) {
     wroteData = true;
   }
 
+  if (!_attributes.empty()) {
+    auto jsAttrUpdates = nlohmann::json::object();
+    for (tuple<string, string> attrUpdate : _attributes) {
+      jsAttrUpdates[get<0>(attrUpdate)] = get<1>(attrUpdate);
+    }
+    js["attrs"] = jsAttrUpdates;
+    wroteData = true;
+  }
+
   if (wroteData) {
     js["index"] = _index;
   }
@@ -112,17 +121,20 @@ bool ElementUpdate::Render(nlohmann::json& js) {
 
 void ElementUpdate::PrintHtml(stringstream &buf) {
   if (_index != -1) {  // we don't print host tag.
-    // if (_tag == "") {
-    //   cout << "Attempted to print empty HTML tag" << endl;
-    //   exit(1);
-    // }
     buf << "<" << _tag;
 
     if (_key != "") {
       buf << " _bkey=\"" << _key << "\"";
     }
 
-    // TODO: attributes
+    if (_attributes.size() > 0) {
+      auto first = _attributes.begin();
+      auto last = _attributes.end();
+      for (auto attr = first; attr != last; attr++) {
+        buf << " " << get<0>(*attr) << "=\"" << get<1>(*attr) << "\"";
+      }
+    }
+
     // TODO: _bid
     buf << ">";
   }

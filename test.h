@@ -13,4 +13,12 @@ template<typename E> void ExpectVector(vector<E> actual, vector<E> expected);
 void ExpectHtml(shared_ptr<Tree>, string);
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected);
 
+#define TEST(FunctionName) \
+  void FunctionName() { \
+    cout << #FunctionName << endl;
+
+#define END_TEST \
+    cout << "Success" << endl; \
+  }
+
 #endif //BARISTA2_TEST_H
