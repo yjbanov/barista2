@@ -1,0 +1,4 @@
+name: barista2
+dependencies:
+  args: any
+  process: any

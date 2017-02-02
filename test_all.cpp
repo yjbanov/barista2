@@ -109,11 +109,11 @@ void TestEventListener() {
   auto widget = make_shared<EventListenerTest>();
   auto tree = make_shared<Tree>(widget);
   ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
-  Expect(widget->eventLog.size(), 0UL);
+  Expect((int) widget->eventLog.size(), 0);
   tree->DispatchEvent("click", "1");
-  Expect(widget->eventLog.size(), 1UL);
+  Expect((int) widget->eventLog.size(), 1);
   tree->DispatchEvent("scroll", "1");
-  Expect(widget->eventLog.size(), 1UL);
+  Expect((int) widget->eventLog.size(), 1);
   cout << "Success" << endl;
 }
 

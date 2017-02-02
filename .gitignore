@@ -1,6 +1,13 @@
 .idea
 main.js*
 test.js*
+test_all.js*
+test_all.html*
+*.asm.js
+*.wasm
+*.wast
+*.gz
+*.mem
 *.bc
 *.a
 cmake-build-debug
@@ -10,3 +17,7 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 unittests
+.pub
+packages
+pubspec.lock
+.packages
