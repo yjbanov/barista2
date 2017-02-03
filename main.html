@@ -9,14 +9,24 @@
         var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
         var host = document.querySelector('#host');
         host.addEventListener("click", function(event) {
-            var bid = event.target.getAttribute("_bid");
+            // Look for the nearest parent with a _bid, then dispatch to it.
+            var bid = null;
+            var parent = event.target;
+            while(bid == null && parent) {
+                bid = parent.getAttribute("_bid");
+                parent = parent.parentNode;
+            }
             if (bid) {
                 dispatchEvent("click", bid);
             } else {
-                console.log(">>> caugth event on target with no _bid:", event.target);
+                console.log(">>> caught event on target with no _bid:", event.target);
             }
         });
-        host.innerHTML = renderFrame();
+        var diff = JSON.parse(renderFrame());
+        if (diff.hasOwnProperty("create")) {
+            console.log(diff["create"]);
+            host.innerHTML = diff["create"];
+        }
     }
 </script>
 <script src="main.js"></script>

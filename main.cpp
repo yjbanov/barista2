@@ -33,10 +33,7 @@ shared_ptr<Tree> tree;
 extern "C" {
 
 const char *RenderFrame() {
-  tree->RenderFrame();
-  auto html = new string("");
-  tree->PrintHtml(*html);
-  return html->c_str();
+  return tree->RenderFrame().c_str();
 }
 
 void DispatchEvent(char* type, char* baristaId) {

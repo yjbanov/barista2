@@ -56,14 +56,6 @@ public:
     return _childElementUpdates.back();
   }
 
-  void InsertChildText(int insertionIndex, string text) {
-    _childTextInsertions.push_back({insertionIndex, text});
-  }
-
-  void UpdateChildText(int index, string text) {
-    _childTextUpdates.push_back({index, text});
-  }
-
   void SetTag(string tag) { _tag = tag; }
   void SetKey(string key) { _key = key; }
   void SetText(string text) { _text = text; _updateText = true; }
@@ -93,14 +85,6 @@ private:
 
   vector<ElementUpdate> _childElementInsertions;
   vector<ElementUpdate> _childElementUpdates;
-
-  //           insert-before index
-  //           |
-  vector<tuple<int, string>> _childTextInsertions;
-
-  //           child index
-  //           |
-  vector<tuple<int, string>> _childTextUpdates;
   vector<tuple<string, string>> _attributes;
 
   PRIVATE_COPY_AND_ASSIGN(ElementUpdate);

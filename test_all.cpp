@@ -136,8 +136,11 @@ class BeforeAfterTest : public StatefulWidget {
 
 
 TEST(TestPrintTag)
+  auto update = TreeUpdate();
+  auto& rootUpdate = update.CreateRootElement();
+  rootUpdate.SetTag("div");
   auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
-  ExpectHtml(tree, "<div></div>");
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestPrintText)
@@ -334,12 +337,14 @@ TEST(TestSyncerCreate)
   auto& rootUpdate = treeUpdate.CreateRootElement();
   rootUpdate.SetTag("div");
   rootUpdate.SetKey("a");
-  rootUpdate.SetText("hello");
   rootUpdate.SetAttribute("a", "b");
   rootUpdate.SetAttribute("c", "d");
+  auto& childUpdate = rootUpdate.InsertChildElement(0);
+  childUpdate.SetTag("button");
+  childUpdate.SetText("hello");
 
   nlohmann::json j;
-  j["create"] = "<div _bkey=\"a\" a=\"b\" c=\"d\">hello</div>";
+  j["create"] = "<div _bkey=\"a\" a=\"b\" c=\"d\"><button>hello</button></div>";
 
   Expect(
     treeUpdate.Render(2),
