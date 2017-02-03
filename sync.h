@@ -70,6 +70,9 @@ public:
   void SetAttribute(string name, string value) {
     _attributes.push_back({name, value});
   }
+  void SetBaristaId(string bid) {
+    _bid = bid;
+  }
 
 private:
   ElementUpdate(int index) : _index(index) { };
@@ -80,6 +83,7 @@ private:
 
   string _tag = "";
   string _key = "";
+  string _bid = "";
 
   bool _updateText = false;
   string _text = "";
@@ -132,8 +136,9 @@ class TreeUpdate {
       js["create"] = html.str();
     } else {
       nlohmann::json jsRootUpdate;
-      _rootUpdate.Render(jsRootUpdate);
-      js["update"] = jsRootUpdate;
+      if (_rootUpdate.Render(jsRootUpdate)) {
+        js["update"] = jsRootUpdate;
+      }
     }
     return js.dump(indent);
   }

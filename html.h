@@ -34,9 +34,6 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
   void SetText(string text) { _text = text; }
 
  private:
-  // Monotonically increasing element ID counter.
-  static int64_t _bidCounter;
-
   class EventListenerConfig {
    private:
     EventListenerConfig(string type, EventListener callback) :
@@ -77,6 +74,11 @@ class RenderElement : public RenderMultiChildParent {
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual void DispatchEvent(string type, string baristaId);
   virtual void PrintHtml(string &buf);
+
+  static void DangerouslyResetBaristaIdCounterForTesting() { _bidCounter = 1; }
+ private:
+  // Monotonically increasing element ID counter.
+  static int64_t _bidCounter;
 };
 
 // A little boilerplate-reducing DSL

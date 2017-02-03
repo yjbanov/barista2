@@ -14,12 +14,11 @@ shared_ptr<RenderNode> Element::Instantiate(shared_ptr<Tree> tree) {
   return make_shared<RenderElement>(tree);
 }
 
-int64_t Element::_bidCounter = 1;
-
 void Element::AddEventListener(string type, EventListener listener) {
-  _bid = to_string(_bidCounter++);
   _eventListeners.push_back(EventListenerConfig(type, listener));
 }
+
+int64_t RenderElement::_bidCounter = 1;
 
 bool RenderElement::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
   assert(newConfiguration != nullptr);
@@ -50,6 +49,14 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
     if (oldConfiguration->_text != newConfiguration->_text) {
       update.SetText(newConfiguration->_text);
     }
+    if (newConfiguration->_eventListeners.size() > 0) {
+      if (oldConfiguration->_bid != "") {
+        newConfiguration->_bid = oldConfiguration->_bid;
+      } else {
+        newConfiguration->_bid = to_string(_bidCounter++);
+        update.SetBaristaId(newConfiguration->_bid);
+      }
+    }
     auto& newAttrs = newConfiguration->_attributes;
     auto& oldAttrs = oldConfiguration->_attributes;
     if (newAttrs != oldAttrs) {
@@ -76,6 +83,13 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
     auto key = newConfiguration->GetKey();
     if (key != nullptr) {
       update.SetKey(key->GetValue());
+    }
+    if (newConfiguration->_bid != "") {
+      update.SetBaristaId(newConfiguration->_bid);
+    }
+    if (newConfiguration->_eventListeners.size() > 0) {
+      newConfiguration->_bid = to_string(_bidCounter++);
+      update.SetBaristaId(newConfiguration->_bid);
     }
     update.SetText(newConfiguration->_text);
     if (newConfiguration->_attributes.size() > 0) {

@@ -26,6 +26,11 @@ bool ElementUpdate::Render(nlohmann::json& js) {
     wroteData = true;
   }
 
+  if (_bid != "") {
+    js["bid"] = _bid;
+    wroteData = true;
+  }
+
   if (_updateText) {
     js["text"] = _text;
     wroteData = true;
@@ -135,7 +140,10 @@ void ElementUpdate::PrintHtml(stringstream &buf) {
       }
     }
 
-    // TODO: _bid
+    if (_bid != "") {
+      buf << " _bid=\"" << _bid << "\"";
+    }
+
     buf << ">";
   }
 

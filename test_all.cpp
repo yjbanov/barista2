@@ -155,7 +155,7 @@ TEST(TestPrintElementWithAttrs)
   ExpectHtml(tree, "<div id=\"foo\"></div>");
 END_TEST
 
-TEST(TestEventListener)
+TEST(TestPrintEventListener)
   auto widget = make_shared<EventListenerTest>();
   auto tree = make_shared<Tree>(widget);
   ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
@@ -166,7 +166,7 @@ TEST(TestEventListener)
   Expect((int) widget->eventLog.size(), 1);
 END_TEST
 
-TEST(TestClasses)
+TEST(TestPrintClasses)
   auto elem = make_shared<Element>("div");
   elem->AddClassName("foo");
   elem->AddClassName("bar");
@@ -410,6 +410,36 @@ TEST(TestAttrsUpdate)
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 
+TEST(TestAddEventListeners)
+  RenderElement::DangerouslyResetBaristaIdCounterForTesting();
+  auto treeUpdate = TreeUpdate();
+  auto &rootUpdate = treeUpdate.CreateRootElement();
+  rootUpdate.SetTag("div");
+  rootUpdate.SetBaristaId("1");
+
+  auto div = make_shared<Element>("div");
+  div->AddEventListener("click", []() {});
+  auto tree = make_shared<Tree>(div);
+  ExpectTreeUpdate(tree, treeUpdate);
+END_TEST
+
+TEST(TestPreserveEventListeners)
+  RenderElement::DangerouslyResetBaristaIdCounterForTesting();
+  auto treeUpdate = TreeUpdate();
+
+  auto before = make_shared<Element>("div");
+  auto beforeChild = make_shared<Element>("span");
+  beforeChild->AddEventListener("click", [](){});
+  before->AddChild(beforeChild);
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = make_shared<Element>("div");
+  auto afterChild = make_shared<Element>("span");
+  afterChild->AddEventListener("click", [](){});
+  after->AddChild(afterChild);
+  test->ExpectStateDiff(after, treeUpdate);
+END_TEST
+
 int main() {
   cout << "Start tests" << endl;
   TestSyncerCreate();
@@ -418,8 +448,8 @@ int main() {
   TestPrintText();
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
-  TestEventListener();
-  TestClasses();
+  TestPrintEventListener();
+  TestPrintClasses();
   TestStyleBasics();
   TestStyleApplication();
   TestBasicStatefulWidget();
@@ -427,6 +457,8 @@ int main() {
   TestHtmlDiffing();
   TestAttrsCreate();
   TestAttrsUpdate();
+  TestAddEventListeners();
+  TestPreserveEventListeners();
   cout << "End tests" << endl;
   return 0;
 }
