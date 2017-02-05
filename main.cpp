@@ -35,7 +35,7 @@ class SampleAppState : public State {
 
     for (auto r = rows.begin(); r != rows.end(); r++) {
       auto row = El("div");
-      row->SetKey(make_shared<Key>(to_string(*r)));
+      row->SetKey(to_string(*r));
       row->SetText("row #" + to_string(*r));
       auto removeButton = El("button");
       removeButton->SetText("Remove");

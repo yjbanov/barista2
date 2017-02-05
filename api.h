@@ -33,27 +33,15 @@ class RenderNode;
 class RenderParent;
 class Event;
 
-class Key final {
- public:
-  Key(string value) : _value(value) {};
-  string GetValue() { return _value; }
-
- private:
-  string _value {""};
-  friend bool operator==(const shared_ptr<Key> a, const shared_ptr<Key> b);
-};
-
-bool operator==(const shared_ptr<Key> a, const shared_ptr<Key> b);
-
 class Node {
  public:
   Node() { }
-  virtual shared_ptr<Key> GetKey() { return _key; }
-  virtual void SetKey(shared_ptr<Key> key) { _key = key; }
+  virtual string GetKey() { return _key; }
+  virtual void SetKey(string key) { _key = key; }
   virtual shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> t) = 0;
 
  private:
-  shared_ptr<Key> _key = nullptr;
+  string _key = "";
 };
 
 typedef function<void(shared_ptr<RenderNode>)> RenderNodeVisitor;

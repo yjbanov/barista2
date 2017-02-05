@@ -85,8 +85,8 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
   } else {
     update.SetTag(newConfiguration->GetTag());
     auto key = newConfiguration->GetKey();
-    if (key != nullptr) {
-      update.SetKey(key->GetValue());
+    if (key != "") {
+      update.SetKey(key);
     }
     if (newConfiguration->_bid != "") {
       update.SetBaristaId(newConfiguration->_bid);
@@ -139,8 +139,8 @@ void RenderElement::PrintHtml(string &buf) {
   if (conf->_bid != "") {
     buf += " _bid=\"" + conf->_bid + "\"";
   }
-  if (conf->GetKey() != nullptr) {
-    buf += " _bkey=\"" + conf->GetKey()->GetValue() + "\"";
+  if (conf->GetKey() != "") {
+    buf += " _bkey=\"" + conf->GetKey() + "\"";
   }
   if (conf->_classNames.size() > 0) {
     buf += " class=\"";

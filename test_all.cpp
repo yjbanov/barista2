@@ -82,10 +82,10 @@ class CreateFirstChildDiffState : public State {
 
   virtual shared_ptr<Node> Build() {
     auto parent = make_shared<Element>("div");
-    parent->SetKey(make_shared<Key>("parent"));
+    parent->SetKey("parent");
     if (withChild) {
       auto child = make_shared<Element>("span");
-      child->SetKey(make_shared<Key>("child"));
+      child->SetKey("child");
       parent->AddChild(child);
     }
     return parent;
@@ -219,7 +219,7 @@ TEST(TestKeyedCreateRootDiff)
   rootUpdate.SetKey("a");
 
   auto div = make_shared<Element>("div");
-  div->SetKey(make_shared<Key>("a"));
+  div->SetKey("a");
   auto tree = make_shared<Tree>(div);
   ExpectTreeUpdate(tree, treeUpdate);
 END_TEST
@@ -245,14 +245,14 @@ TEST(TestKeyedRemoveOnlyChildDiff)
   rootUpdate.RemoveChild(0);
 
   auto before = make_shared<Element>("div");
-  before->SetKey(make_shared<Key>("parent"));
+  before->SetKey("parent");
   auto beforeChild = make_shared<Element>("span");
-  beforeChild->SetKey(make_shared<Key>("child"));
+  beforeChild->SetKey("child");
   before->AddChild(beforeChild);
   auto test = make_shared<BeforeAfterTest>(before);
 
   auto after = make_shared<Element>("div");
-  after->SetKey(make_shared<Key>("parent"));
+  after->SetKey("parent");
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 

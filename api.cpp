@@ -30,11 +30,6 @@ bool _canUpdate(shared_ptr<RenderNode> node, shared_ptr<Node> configuration) {
   return node->GetConfiguration()->GetKey() == configuration->GetKey();
 }
 
-bool operator==(const std::shared_ptr<Key> a, const std::shared_ptr<Key> b) {
-  return (a == nullptr && b == nullptr) ||
-      (a != nullptr && b != nullptr && a->_value == b->_value);
-}
-
 RenderNode::RenderNode(shared_ptr<Tree> tree) : _tree(tree) { }
 
 void RenderNode::Update(shared_ptr<Node> newConfiguration, ElementUpdate& update) {
@@ -302,8 +297,8 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
     auto trackedChildIter = currentChildren.end() - 1;
     shared_ptr<Node> config = node->GetConfiguration();
     auto key = config->GetKey();
-    if (key != nullptr) {
-      keyMap[key->GetValue()] = trackedChildIter;
+    if (key != "") {
+      keyMap[key] = trackedChildIter;
     }
   }
 
@@ -317,8 +312,8 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
     shared_ptr<Node> node = *iter;
     auto key = node->GetKey();
     TrackedChildren::iterator baseChild = currentChildren.end();
-    if (key != nullptr) {
-      auto baseEntry = keyMap.find(key->GetValue());
+    if (key != "") {
+      auto baseEntry = keyMap.find(key);
       if (baseEntry != keyMap.end()) {
         baseChild = baseEntry->second;
       }
