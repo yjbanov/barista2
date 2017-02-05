@@ -22,7 +22,7 @@ typedef function<void()> EventListener;
 
 class Element : public MultiChildNode, public enable_shared_from_this<Element> {
  public:
-  Element(string tag) : _tag(tag), MultiChildNode() {}
+  Element(string tag) : MultiChildNode(), _tag(tag) {}
   shared_ptr<RenderNode> Instantiate(shared_ptr<Tree> tree);
   string GetTag() { return _tag; }
   map<string, string>::iterator GetAttributes() { return _attributes.begin(); };

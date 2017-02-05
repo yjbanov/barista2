@@ -118,9 +118,9 @@ bool RenderStatelessWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
 }
 
 void RenderStatelessWidget::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
-  assert(configPtr != nullptr);
-
+  assert(dynamic_cast<StatelessWidget*>(configPtr.get()));
   auto newConfiguration = static_pointer_cast<StatelessWidget>(configPtr);
+
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
     // or replace with a new one.
@@ -168,9 +168,9 @@ bool RenderStatefulWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
 }
 
 void RenderStatefulWidget::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
-  assert(configPtr != nullptr);
-
+  assert(dynamic_cast<StatefulWidget*>(configPtr.get()));
   auto newConfiguration = static_pointer_cast<StatefulWidget>(configPtr);
+
   if (GetConfiguration() != newConfiguration) {
     // Build the new configuration and decide whether to reuse the child node
     // or replace with a new one.
@@ -257,9 +257,12 @@ vector<int> ComputeLongestIncreasingSubsequence(vector<int> & sequence) {
 }
 
 void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
-  assert(configPtr != nullptr);
-
+  assert(dynamic_cast<MultiChildNode*>(configPtr.get()));
   auto newConfiguration = static_pointer_cast<MultiChildNode>(configPtr);
+
+  if (GetConfiguration() != nullptr) {
+    assert(dynamic_cast<MultiChildNode*>(GetConfiguration().get()));
+  }
   auto oldConfiguration = static_pointer_cast<MultiChildNode>(GetConfiguration());
 
   if (oldConfiguration == newConfiguration) {

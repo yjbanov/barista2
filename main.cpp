@@ -1,5 +1,9 @@
 #include <iostream>
 #include <emscripten/emscripten.h>
+#include <list>
+#include <locale>
+#include <codecvt>
+#include <string>
 
 #include "api.h"
 #include "html.h"
@@ -10,36 +14,51 @@ using namespace barista;
 class SampleAppState : public State {
  public:
   bool greet = true;
-  int rows = 5;
+  int rowCounter = 1;
+  list<int> rows;
+
+  SampleAppState() {
+    for (int i = 0; i < 4; i++) {
+      AddRow();
+    }
+  };
+
+  void AddRow() {
+    rows.push_back(rowCounter++);
+  }
 
   virtual shared_ptr<Node> Build() {
     auto container = El("div");
 
     auto message = El("div");
-    if (greet) {
-      message->AddChild(Tx("Hello"));
-    } else {
-      message->AddChild(Tx("Ciao!!!"));
-    }
+    auto text = greet ? Tx("Hello") : Tx("Ciao!!!");
 
-    for (int i = 0; i < rows; i++) {
-      cout << "adding row " << i << endl;
+    for (auto r = rows.begin(); r != rows.end(); r++) {
       auto row = El("div");
-      row->AddChild(Tx("row #" + to_string(i)));
+      row->SetKey(make_shared<Key>(to_string(*r)));
+      row->SetText("row #" + to_string(*r));
+      auto removeButton = El("button");
+      removeButton->SetText("Remove");
+      removeButton->AddEventListener("click", [&]() {
+        rows.erase(r);
+        ScheduleUpdate();
+      });
+      row->AddChild(removeButton);
       message->AddChild(row);
     }
 
     auto button = El("button");
+    button->SetText("Add Row");
     button->AddEventListener("click", [&]() {
       cout << "Clicked! " << greet << endl;
       greet = !greet;
-      rows++;
+      AddRow();
       ScheduleUpdate();
     });
-    button->AddChild(Tx("Greeting"));
 
-    container->AddChild(message);
     container->AddChild(button);
+    container->AddChild(text);
+    container->AddChild(message);
     return container;
   }
 };
@@ -55,10 +74,15 @@ class SampleApp : public StatefulWidget {
 
 shared_ptr<Tree> tree;
 
+// This is intentionally static so that the string is not
+// destroyed after it is returned to the JS side.
+string lastDiff;
+
 extern "C" {
 
-const char *RenderFrame() {
-  return tree->RenderFrame().c_str();
+const char* RenderFrame() {
+  lastDiff = tree->RenderFrame(2);
+  return lastDiff.c_str();
 }
 
 void DispatchEvent(char* type, char* baristaId) {
@@ -68,7 +92,6 @@ void DispatchEvent(char* type, char* baristaId) {
 int main() {
   tree = make_shared<Tree>(make_shared<SampleApp>());
   EM_ASM(
-    console.log('Entered main()');
     allReady();
   );
 }

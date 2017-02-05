@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<body>
+<div id="host"></div>
+
+<script type="application/javascript" src="sync.js"></script>
+<script type="application/javascript">
+function allReady() {
+    var renderFrame = Module.cwrap('RenderFrame', 'string', []);
+    var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
+    var host = document.querySelector('#host');
+
+    function syncFromNative() {
+        var json = renderFrame();
+        console.log('>>> diff: ', json);
+        var diff = JSON.parse(json);
+        if (!diff) {
+            return;
+        }
+        if (diff.hasOwnProperty("create")) {
+            console.log(diff["create"]);
+            host.innerHTML = diff["create"];
+        } else if (diff.hasOwnProperty("update")) {
+            console.log(diff["update"]);
+            applyElementUpdate(host.firstElementChild, diff["update"]);
+        }
+    }
+
+    host.addEventListener("click", function(event) {
+        // Look for the nearest parent with a _bid, then dispatch to it.
+        var bid = null;
+        var parent = event.target;
+        while(bid == null && parent && parent != document) {
+            bid = parent.getAttribute("_bid");
+            parent = parent.parentNode;
+        }
+        if (bid) {
+            dispatchEvent("click", bid);
+            syncFromNative();
+        } else {
+            console.log(">>> caught event on target with no _bid:", event.target);
+        }
+    });
+    syncFromNative();
+}
+</script>
+<script type="application/javascript">
+    var Module = {};
+    fetch('main.wasm')
+        .then(function (response) {
+            return response.arrayBuffer();
+        })
+        .then(function (bytes) {
+            Module['wasmBinary'] = bytes;
+            var script = document.createElement('script');
+            script.src = "main.js";
+            document.body.appendChild(script);
+        });
+</script>
+</body>
+</html>

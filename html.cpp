@@ -30,6 +30,7 @@ bool RenderElement::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
 
   shared_ptr<Element> element = static_pointer_cast<Element>(newConfiguration);
   if (GetConfiguration() != nullptr) {
+    assert(dynamic_cast<Element*>(GetConfiguration().get()));
     shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
     if (config->GetTag() != element->GetTag()) {
       return false;
@@ -41,11 +42,14 @@ bool RenderElement::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
 void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
   // TODO: figure out why dynamic_pointer_cast doesn't work
   assert(dynamic_cast<Element*>(configPtr.get()) != nullptr);
-
   shared_ptr<Element> newConfiguration = static_pointer_cast<Element>(configPtr);
-  shared_ptr<Element> oldConfiguration = static_pointer_cast<Element>(GetConfiguration());
+
   if (GetConfiguration() != nullptr) {
-    shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
+    assert(dynamic_cast<Element*>(GetConfiguration().get()));
+  }
+  shared_ptr<Element> oldConfiguration = static_pointer_cast<Element>(GetConfiguration());
+
+  if (oldConfiguration != nullptr) {
     if (oldConfiguration->_text != newConfiguration->_text) {
       update.SetText(newConfiguration->_text);
     }
@@ -105,6 +109,7 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
 }
 
 void RenderElement::DispatchEvent(string type, string baristaId) {
+  assert(dynamic_cast<Element*>(GetConfiguration().get()));
   shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
   if (config->_bid == baristaId) {
     for (auto listener : config->_eventListeners) {
@@ -120,7 +125,9 @@ void RenderElement::DispatchEvent(string type, string baristaId) {
 }
 
 void RenderElement::PrintHtml(string &buf) {
+  assert(dynamic_cast<Element*>(GetConfiguration().get()));
   auto conf = static_pointer_cast<Element>(GetConfiguration());
+
   buf += "<" + conf->_tag;
   if (conf->_attributes.size() > 0) {
     auto first = conf->_attributes.begin();

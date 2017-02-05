@@ -86,10 +86,19 @@ Future<Null> cc(dynamic source, String output,
     '-std=c++11',
     '-O${optimizerLevel}',
     '-s',
-    'ASSERTIONS=1',
+    'ASSERTIONS=0',
     '-s',
     'NO_EXIT_RUNTIME=1',
   ];
+
+  if (optimizerLevel < 3) {
+    args.addAll([
+      '-s',
+      'DEMANGLE_SUPPORT=1',
+      '-s',
+      'ASSERTIONS=2',
+    ]);
+  }
 
   if (compileToWasm) {
     args.addAll([

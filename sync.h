@@ -124,7 +124,7 @@ class TreeUpdate {
         js["update"] = jsRootUpdate;
       }
     }
-    return js.dump(indent);
+    return indent > 0 ? js.dump(indent) : js.dump();
   }
 
  private:
