@@ -272,24 +272,21 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
     bool  // whether the child pointed to should be retained
   >;
 
-  // A vector of tracked children.
-  using TrackedChildren = vector<TrackedChild>;
-
-  TrackedChildren currentChildren;
-  map<string, TrackedChildren::iterator> keyMap;
+  auto currentChildren = vector<TrackedChild>(_currentChildren.size());
+  map<string, int> keyMap;
 
   for (auto iter = _currentChildren.begin(); iter != _currentChildren.end(); iter++) {
     auto node = *iter;
-    currentChildren.push_back({
+    int baseIndex = (int) (iter - _currentChildren.begin());
+    currentChildren[baseIndex] = {
         iter,
-        (int) (iter - _currentChildren.begin()),
+        baseIndex,
         false,
-    });
-    auto trackedChildIter = currentChildren.end() - 1;
+    };
     shared_ptr<Node> config = node->GetConfiguration();
     auto key = config->GetKey();
     if (key != "") {
-      keyMap[key] = trackedChildIter;
+      keyMap[key] = baseIndex;
     }
   }
 
@@ -298,22 +295,22 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
   //           |                 |
   //           node              base index (or -1)
 
-  TrackedChildren::iterator afterLastUsedUnkeyedChild = currentChildren.begin();
+  vector<TrackedChild>::iterator afterLastUsedUnkeyedChild = currentChildren.begin();
   for (auto iter = newChildren.begin(); iter != newChildren.end(); iter++) {
     shared_ptr<Node> node = *iter;
     auto key = node->GetKey();
-    TrackedChildren::iterator baseChild = currentChildren.end();
+    vector<TrackedChild>::iterator baseChild = currentChildren.end();
     if (key != "") {
       auto baseEntry = keyMap.find(key);
       if (baseEntry != keyMap.end()) {
-        baseChild = baseEntry->second;
+        baseChild = currentChildren.begin() + baseEntry->second;
       }
     } else {
       // Start with afterLastUsedUnkeyedChild and scan until the first child
       // we can update. Use it. This approach is naive. It does not support
       // swaps, for example. It does support removes though. For swaps, the
       // developer is expected to use keys anyway.
-      TrackedChildren::iterator scanner = afterLastUsedUnkeyedChild;
+      vector<TrackedChild>::iterator scanner = afterLastUsedUnkeyedChild;
       while(scanner != currentChildren.end()) {
         shared_ptr<RenderNode> currentChild = *(get<0>(*scanner));
         if (currentChild->CanUpdateUsing(node)) {

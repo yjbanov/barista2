@@ -32,6 +32,11 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
   void AddStyle(Style &style) { AddClassName(style.GetIdentifierClass()); }
   void AddClassName(string className) { _classNames.push_back(className); }
   void SetText(string text) { _text = text; }
+  shared_ptr<Element> El(string tag) {
+    auto child = make_shared<Element>(tag);
+    AddChild(child);
+    return child;
+  }
 
  private:
   class EventListenerConfig {

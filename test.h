@@ -14,6 +14,7 @@ void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected);
 
 #define TEST(FunctionName) \
   void FunctionName() { \
+    cout << "=============================================" << endl; \
     cout << #FunctionName << endl;
 
 #define END_TEST \

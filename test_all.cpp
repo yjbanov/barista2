@@ -292,6 +292,24 @@ TEST(TestKeyedRemoveOnlyChildDiff)
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 
+TEST(TestKeyedChildListDiff)
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  auto& childUpdate = rootUpdate.InsertChildElement(1);
+  childUpdate.SetTag("span");
+  childUpdate.SetKey("b");
+
+  auto before = El("div");
+  before->El("span")->SetKey("a");
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = El("div");
+  after->El("span")->SetKey("a");
+  after->El("span")->SetKey("b");
+
+  test->ExpectStateDiff(after, treeUpdate);
+END_TEST
+
 TEST(TestIdenticalRebuild)
   auto before = make_shared<Element>("div");
   auto beforeChild = make_shared<Element>("span");
@@ -351,22 +369,22 @@ TEST(TestUnkeyedCreateFirstChildDiff)
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 
-void TestKeyedHtmlDiffing() {
-  TestKeyedCreateRootDiff();
-  TestKeyedCreateFirstChildDiff();
-  TestKeyedRemoveOnlyChildDiff();
-}
+TEST(TestUnkeyedChildListDiff)
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  auto& childUpdate = rootUpdate.InsertChildElement(1);
+  childUpdate.SetTag("span");
 
-void TestUnkeyedHtmlDiffing() {
-  TestUnkeyedCreateRootDiff();
-  TestUnkeyedCreateFirstChildDiff();
-  TestIdenticalRebuild();
-}
+  auto before = El("div");
+  before->El("span");
+  auto test = make_shared<BeforeAfterTest>(before);
 
-void TestHtmlDiffing() {
-  TestKeyedHtmlDiffing();
-  TestUnkeyedHtmlDiffing();
-}
+  auto after = El("div");
+  after->El("span");
+  after->El("span");
+
+  test->ExpectStateDiff(after, treeUpdate);
+END_TEST
 
 TEST(TestSyncerCreate)
   auto treeUpdate = TreeUpdate();
@@ -492,6 +510,49 @@ TEST(TestDispatchEvent)
   tree->DispatchEvent("click", "1");
   ExpectVector(widget->eventLog, vector<string>({"click"}));
 END_TEST
+
+TEST(TestAppendToLongList)
+  int N = 20;
+
+  auto before = El("div");
+  for (int i = 0; i < N; i++) {
+    before->El("span")->SetKey(to_string(i));
+  }
+  auto test = make_shared<BeforeAfterTest>(before);
+
+  auto after = El("div");
+  for (int i = 0; i < N + 1; i++) {
+    after->El("span")->SetKey(to_string(i));
+  }
+
+  auto treeUpdate = TreeUpdate();
+  auto& rootUpdate = treeUpdate.UpdateRootElement();
+  auto& childUpdate = rootUpdate.InsertChildElement(N);
+  childUpdate.SetTag("span");
+  childUpdate.SetKey(to_string(N));
+
+  test->ExpectStateDiff(after, treeUpdate);
+END_TEST
+
+void TestKeyedHtmlDiffing() {
+  TestKeyedCreateRootDiff();
+  TestKeyedCreateFirstChildDiff();
+  TestKeyedRemoveOnlyChildDiff();
+  TestKeyedChildListDiff();
+}
+
+void TestUnkeyedHtmlDiffing() {
+  TestUnkeyedCreateRootDiff();
+  TestUnkeyedCreateFirstChildDiff();
+  TestIdenticalRebuild();
+  TestUnkeyedChildListDiff();
+}
+
+void TestHtmlDiffing() {
+  TestKeyedHtmlDiffing();
+  TestUnkeyedHtmlDiffing();
+  TestAppendToLongList();
+}
 
 int main() {
   cout << "Start tests" << endl;
