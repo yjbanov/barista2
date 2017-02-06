@@ -93,6 +93,15 @@ bool ElementUpdate::Render(nlohmann::json& js) {
     wroteData = true;
   }
 
+  if (!_classNames.empty()) {
+    auto jsClassNames = nlohmann::json::array();
+    for (string className : _classNames) {
+      jsClassNames.push_back(className);
+    }
+    js["classes"] = jsClassNames;
+    wroteData = true;
+  }
+
   if (wroteData) {
     js["index"] = _index;
   }
@@ -108,12 +117,20 @@ void ElementUpdate::PrintHtml(stringstream &buf) {
       buf << " _bkey=\"" << _key << "\"";
     }
 
-    if (_attributes.size() > 0) {
+    if (!_attributes.empty()) {
       auto first = _attributes.begin();
       auto last = _attributes.end();
       for (auto attr = first; attr != last; attr++) {
         buf << " " << get<0>(*attr) << "=\"" << get<1>(*attr) << "\"";
       }
+    }
+
+    if (!_classNames.empty()) {
+      buf << " class=\"";
+      for (auto className = _classNames.begin(); className != _classNames.end(); className++) {
+        buf << " " << *className;
+      }
+      buf << "\"";
     }
 
     if (_bid != "") {

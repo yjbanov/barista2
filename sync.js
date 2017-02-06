@@ -39,6 +39,14 @@ function applyElementUpdate(element, update) {
         }
     }
 
+    if (update.hasOwnProperty("classes")) {
+        // TODO(yjbanov): properly diff the class list.
+        var classes = update['classes'];
+        for (var i = 0; i < classes.length; i++) {
+            element.classList.add(classes[i]);
+        }
+    }
+
     if (removes != null) {
         for (var i = 0; i < removes.length; i++) {
             removes[i].remove();

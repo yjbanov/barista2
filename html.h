@@ -73,7 +73,6 @@ class RenderElement : public RenderMultiChildParent {
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual void DispatchEvent(string type, string baristaId);
-  virtual void PrintHtml(string &buf);
 
   static void DangerouslyResetBaristaIdCounterForTesting() { _bidCounter = 1; }
  private:

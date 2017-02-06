@@ -65,6 +65,9 @@ public:
   void SetBaristaId(string bid) {
     _bid = bid;
   }
+  void AddClassName(string name) {
+    _classNames.push_back(name);
+  }
 
 private:
   ElementUpdate(int index) : _index(index) { };
@@ -86,6 +89,7 @@ private:
   vector<ElementUpdate> _childElementInsertions;
   vector<ElementUpdate> _childElementUpdates;
   vector<tuple<string, string>> _attributes;
+  vector<string> _classNames;
 
   PRIVATE_COPY_AND_ASSIGN(ElementUpdate);
 

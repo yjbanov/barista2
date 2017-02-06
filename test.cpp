@@ -63,13 +63,6 @@ void ExpectVector(vector<E> actual, vector<E> expected) {
 
 template void ExpectVector<int>(vector<int>, vector<int>);
 
-void ExpectHtml(shared_ptr<Tree> tree, string expectedHtml) {
-  tree->RenderFrame();
-  auto html = new string("");
-  tree->PrintHtml(*html);
-  Expect(*html, expectedHtml);
-}
-
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected) {
   auto diff = tree->RenderFrame(2);
   Expect(diff, expected.Render(2));

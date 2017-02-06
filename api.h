@@ -64,7 +64,6 @@ class RenderNode {
 
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
   virtual void DispatchEvent(string type, string baristaId) = 0;
-  virtual void PrintHtml(string &buf) = 0;
 
  private:
   shared_ptr<Tree> _tree = nullptr;
@@ -82,7 +81,6 @@ class Tree : public enable_shared_from_this<Tree> {
     return RenderFrame(0);
   }
   string RenderFrame(int indent);
-  void PrintHtml(string &buf);
 
  private:
   shared_ptr<Node> _topLevelWidget = nullptr;
@@ -142,7 +140,6 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
   virtual void DispatchEvent(string type, string baristaId);
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
-  virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
   shared_ptr<RenderNode> _child = nullptr;
@@ -167,7 +164,6 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
   virtual shared_ptr<State> GetState() { return _state; }
-  virtual void PrintHtml(string &buf) { if (_child != nullptr) { _child->PrintHtml(buf); } }
 
  private:
   shared_ptr<State> _state = nullptr;
@@ -181,11 +177,6 @@ class RenderMultiChildParent : public RenderParent, public enable_shared_from_th
 
   virtual void VisitChildren(RenderNodeVisitor visitor);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
-  virtual void PrintHtml(string &buf) {
-    for (auto child : _currentChildren) {
-      child->PrintHtml(buf);
-    }
-  }
 
  private:
   vector<shared_ptr<RenderNode>> _currentChildren;

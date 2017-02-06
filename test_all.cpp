@@ -136,37 +136,47 @@ class BeforeAfterTest : public StatefulWidget {
 
 
 TEST(TestPrintTag)
+  auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
+
   auto update = TreeUpdate();
   auto& rootUpdate = update.CreateRootElement();
   rootUpdate.SetTag("div");
-  auto tree = make_shared<Tree>(make_shared<ElementTagTest>());
   ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestPrintText)
   auto tree = make_shared<Tree>(Tx("hello"));
-  ExpectHtml(tree, "<span>hello</span>");
+
+  auto update = TreeUpdate();
+  auto& rootUpdate = update.CreateRootElement();
+  rootUpdate.SetTag("span");
+  rootUpdate.SetText("hello");
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestPrintElementWithChildren)
   auto tree = make_shared<Tree>(make_shared<ElementWithChildrenTest>());
-  ExpectHtml(tree, "<div><span>hello</span><span></span></div>");
+
+  auto update = TreeUpdate();
+  auto& div = update.CreateRootElement();
+  div.SetTag("div");
+  auto& child1 = div.InsertChildElement(0);
+  child1.SetTag("span");
+  child1.SetText("hello");
+  auto& child2 = div.InsertChildElement(0);
+  child2.SetTag("span");
+
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestPrintElementWithAttrs)
   auto tree = make_shared<Tree>(make_shared<ElementWithAttrsTest>());
-  ExpectHtml(tree, "<div id=\"foo\"></div>");
-END_TEST
+  auto update = TreeUpdate();
+  auto& div = update.CreateRootElement();
+  div.SetTag("div");
+  div.SetAttribute("id", "foo");
 
-TEST(TestPrintEventListener)
-  auto widget = make_shared<EventListenerTest>();
-  auto tree = make_shared<Tree>(widget);
-  ExpectHtml(tree, "<div><button _bid=\"1\"></button></div>");
-  Expect((int) widget->eventLog.size(), 0);
-  tree->DispatchEvent("click", "1");
-  Expect((int) widget->eventLog.size(), 1);
-  tree->DispatchEvent("scroll", "1");
-  Expect((int) widget->eventLog.size(), 1);
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestPrintClasses)
@@ -174,7 +184,14 @@ TEST(TestPrintClasses)
   elem->AddClassName("foo");
   elem->AddClassName("bar");
   auto tree = make_shared<Tree>(elem);
-  ExpectHtml(tree, "<div class=\"foo bar\"></div>");
+
+  auto update = TreeUpdate();
+  auto& div = update.CreateRootElement();
+  div.SetTag("div");
+  div.AddClassName("foo");
+  div.AddClassName("bar");
+
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestStyleBasics)
@@ -198,18 +215,37 @@ TEST(TestStyleApplication)
   elem->AddStyle(s2);
   elem->AddClassName("foo");
   auto tree = make_shared<Tree>(elem);
-  ExpectHtml(tree, "<div class=\"_s1 _s2 foo\"></div>");
+
+  auto update = TreeUpdate();
+  auto& div = update.CreateRootElement();
+  div.SetTag("div");
+  div.AddClassName("_s1");
+  div.AddClassName("_s2");
+  div.AddClassName("foo");
+
+  ExpectTreeUpdate(tree, update);
 END_TEST
 
 TEST(TestBasicStatefulWidget)
   auto widget = make_shared<BasicStatefulWidgetTest>();
   auto tree = make_shared<Tree>(widget);
-  ExpectHtml(tree, "<span>Hello</span>");
+
+  auto update1 = TreeUpdate();
+  auto& child1 = update1.CreateRootElement();
+  child1.SetTag("span");
+  child1.SetText("Hello");
+  ExpectTreeUpdate(tree, update1);
+
   widget->state->label = "World";
-  ExpectHtml(tree, "<span>Hello</span>");
+
+  auto nullUpdate = TreeUpdate();
+  ExpectTreeUpdate(tree, nullUpdate);
+
   widget->state->ScheduleUpdate();
-  ExpectHtml(tree, "<span>World</span>");
-  cout << "Success" << endl;
+  auto update2 = TreeUpdate();
+  auto& child2 = update2.UpdateRootElement();
+  child2.SetText("World");
+  ExpectTreeUpdate(tree, update2);
 END_TEST
 
 TEST(TestKeyedCreateRootDiff)
@@ -453,7 +489,6 @@ int main() {
   TestPrintText();
   TestPrintElementWithChildren();
   TestPrintElementWithAttrs();
-  TestPrintEventListener();
   TestPrintClasses();
   TestStyleBasics();
   TestStyleApplication();

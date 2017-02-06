@@ -82,6 +82,9 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
         }
       }
     }
+
+    // TODO(yjbanov): implement class diffing
+    // TODO(yjbanov): implement style diffing
   } else {
     update.SetTag(newConfiguration->GetTag());
     auto key = newConfiguration->GetKey();
@@ -103,6 +106,14 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
         update.SetAttribute(attr->first, attr->second);
       }
     }
+
+    if (!newConfiguration->_classNames.empty()) {
+      auto ibegin = newConfiguration->_classNames.begin();
+      auto iend = newConfiguration->_classNames.end();
+      for (auto i = ibegin; i != iend; i++) {
+        update.AddClassName(*i);
+      }
+    }
   }
 
   RenderMultiChildParent::Update(configPtr, update);
@@ -122,41 +133,6 @@ void RenderElement::DispatchEvent(string type, string baristaId) {
       child->DispatchEvent(type, baristaId);
     });
   }
-}
-
-void RenderElement::PrintHtml(string &buf) {
-  assert(dynamic_cast<Element*>(GetConfiguration().get()));
-  auto conf = static_pointer_cast<Element>(GetConfiguration());
-
-  buf += "<" + conf->_tag;
-  if (conf->_attributes.size() > 0) {
-    auto first = conf->_attributes.begin();
-    auto last = conf->_attributes.end();
-    for (auto attr = first; attr != last; attr++) {
-      buf += " " + attr->first + "=\"" + attr->second + "\"";
-    }
-  }
-  if (conf->_bid != "") {
-    buf += " _bid=\"" + conf->_bid + "\"";
-  }
-  if (conf->GetKey() != "") {
-    buf += " _bkey=\"" + conf->GetKey() + "\"";
-  }
-  if (conf->_classNames.size() > 0) {
-    buf += " class=\"";
-    auto classNames = conf->_classNames;
-    buf += classNames[0];
-    for (auto i = classNames.begin() + 1; i != classNames.end(); i++) {
-      buf += " " + *i;
-    }
-    buf += "\"";
-  }
-  buf += ">";
-  if (conf->_text != "") {
-    buf += conf->_text;
-  }
-  RenderMultiChildParent::PrintHtml(buf);
-  buf += "</" + conf->_tag + ">";
 }
 
 shared_ptr<Element> El(string tag) {

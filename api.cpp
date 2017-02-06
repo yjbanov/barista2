@@ -77,15 +77,6 @@ void Tree::DispatchEvent(string type, string baristaId) {
   _topLevelNode->DispatchEvent(type, baristaId);
 }
 
-void Tree::PrintHtml(string &buf) {
-  if (_topLevelNode == nullptr) {
-    buf += "null";
-  } else {
-    _topLevelNode->PrintHtml(buf);
-  }
-}
-
-
 shared_ptr<RenderNode> StatelessWidget::Instantiate(shared_ptr<Tree> tree) {
   return make_shared<RenderStatelessWidget>(tree);
 }

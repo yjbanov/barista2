@@ -10,7 +10,6 @@ using namespace barista;
 template<typename T> void Expect(T actual, T expected);
 template<typename E> void ExpectVector(vector<E> actual, vector<E> expected);
 
-void ExpectHtml(shared_ptr<Tree>, string);
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected);
 
 #define TEST(FunctionName) \
