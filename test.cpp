@@ -62,6 +62,7 @@ void ExpectVector(vector<E> actual, vector<E> expected) {
 }
 
 template void ExpectVector<int>(vector<int>, vector<int>);
+template void ExpectVector<string>(vector<string>, vector<string>);
 
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected) {
   auto diff = tree->RenderFrame(2);

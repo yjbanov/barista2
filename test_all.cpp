@@ -481,6 +481,18 @@ TEST(TestPreserveEventListeners)
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 
+TEST(TestDispatchEvent)
+  RenderElement::DangerouslyResetBaristaIdCounterForTesting();
+  auto widget = make_shared<EventListenerTest>();
+  auto tree = make_shared<Tree>(widget);
+  tree->RenderFrame();
+  ExpectVector(widget->eventLog, vector<string>());
+  tree->DispatchEvent("click", "does not exist");
+  ExpectVector(widget->eventLog, vector<string>());
+  tree->DispatchEvent("click", "1");
+  ExpectVector(widget->eventLog, vector<string>({"click"}));
+END_TEST
+
 int main() {
   cout << "Start tests" << endl;
   TestSyncerCreate();
@@ -499,6 +511,7 @@ int main() {
   TestAttrsUpdate();
   TestAddEventListeners();
   TestPreserveEventListeners();
+  TestDispatchEvent();
   cout << "End tests" << endl;
   return 0;
 }
