@@ -12,6 +12,12 @@ template<typename E> void ExpectVector(vector<E> actual, vector<E> expected);
 
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected);
 
+void ExpectChildDiff(
+    vector<tuple<string, string>> before,
+    vector<tuple<string, string>> after,
+    TreeUpdate & expectedUpdate
+);
+
 #define TEST(FunctionName) \
   void FunctionName() { \
     cout << "=============================================" << endl; \

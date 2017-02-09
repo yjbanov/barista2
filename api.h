@@ -81,6 +81,7 @@ class Tree : public enable_shared_from_this<Tree> {
     return RenderFrame(0);
   }
   string RenderFrame(int indent);
+  void RenderFrameIntoUpdate(TreeUpdate & treeUpdate);
 
  private:
   shared_ptr<Node> _topLevelWidget = nullptr;

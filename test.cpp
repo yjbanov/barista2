@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "api.h"
+#include "html.h"
 #include "sync.h"
 
 using namespace std;
@@ -67,4 +68,52 @@ template void ExpectVector<string>(vector<string>, vector<string>);
 void ExpectTreeUpdate(shared_ptr<Tree> tree, TreeUpdate& expected) {
   auto diff = tree->RenderFrame(2);
   Expect(diff, expected.Render(2));
+}
+
+class ChildDiffState : public State {
+ public:
+  virtual shared_ptr<Node> Build() {
+    auto parent = El("parent");
+    for (auto& childSpec : spec) {
+      auto child = parent->El(get<0>(childSpec));
+      auto key = get<1>(childSpec);
+      if (key != "") {
+        child->SetKey(key);
+      }
+    }
+    return parent;
+  }
+
+  vector<tuple<string, string>> spec;
+};
+
+class ChildDiff : public StatefulWidget {
+ public:
+  ChildDiff()
+    : state(make_shared<ChildDiffState>()) { };
+
+  virtual shared_ptr<State> CreateState() {
+    return state;
+  }
+
+  shared_ptr<ChildDiffState> state;
+};
+
+void ExpectChildDiff(
+    vector<tuple<string, string>> before,
+    vector<tuple<string, string>> after,
+    TreeUpdate & expectedUpdate
+) {
+  auto widget = make_shared<ChildDiff>();
+
+  // Render before; drop the diff
+  widget->state->spec = before;
+  auto tree = make_shared<Tree>(widget);
+  tree->RenderFrame();
+
+  // Render after; compare the diff
+  widget->state->spec = after;
+  widget->state->ScheduleUpdate();
+
+  ExpectTreeUpdate(tree, expectedUpdate);
 }

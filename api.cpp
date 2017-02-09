@@ -56,7 +56,11 @@ void RenderParent::Update(shared_ptr<Node> newConfiguration, ElementUpdate& upda
 
 string Tree::RenderFrame(int indent) {
   auto treeUpdate = TreeUpdate();
+  RenderFrameIntoUpdate(treeUpdate);
+  return treeUpdate.Render(indent);
+}
 
+void Tree::RenderFrameIntoUpdate(TreeUpdate & treeUpdate) {
   if (_topLevelNode == nullptr) {
     _topLevelNode = _topLevelWidget->Instantiate(shared_from_this());
     auto& rootInsertion = treeUpdate.CreateRootElement();
@@ -65,8 +69,6 @@ string Tree::RenderFrame(int indent) {
     auto& rootUpdate = treeUpdate.UpdateRootElement();
     _topLevelNode->Update(_topLevelWidget, rootUpdate);
   }
-
-  return treeUpdate.Render(indent);
 }
 
 void Tree::VisitChildren(RenderNodeVisitor visitor) {
@@ -351,7 +353,7 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
     // Three possibilities:
     //   - it's a new child => its base index == -1
     //   - it's a moved child => its base index != -1 && base index != insertion index
-    //   - it's a noop child => its base index != -1 && base index == insertion index
+    //   - it's a stationary child => its base index != -1 && base index == insertion index
 
     // Index in the base list of the moved child, or -1
     int baseIndex = get<1>(*targetEntry);
@@ -359,7 +361,11 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
     int insertionIndex = baseCount;
     if (insertionPoint != lis.end()) {
       insertionIndex = *insertionPoint;
-      insertionPoint++;
+      if (baseIndex == insertionIndex) {
+        // We've moved past the element in the target list that
+        // corresponds to the insertion point. Advance to the next one.
+        insertionPoint++;
+      }
     }
 
     if (baseIndex == -1) {
@@ -372,12 +378,14 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
       newChildVector.push_back(childRenderNode);
       childRenderNode->Update(childNode, childInsertion);
       childRenderNode->Attach(shared_from_this());
-    } else if (baseIndex != insertionIndex) {
-      // Moved child
-      update.MoveChild(insertionIndex, baseIndex);
-      newChildVector.push_back(_currentChildren[baseIndex]);
     } else {
-      newChildVector.push_back(_currentChildren[baseIndex]);
+      if (baseIndex != insertionIndex) {
+        // Moved child
+        update.MoveChild(insertionIndex, baseIndex);
+        newChildVector.push_back(_currentChildren[baseIndex]);
+      } else {
+        newChildVector.push_back(_currentChildren[baseIndex]);
+      }
     }
   }
   _currentChildren = newChildVector;

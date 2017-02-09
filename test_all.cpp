@@ -534,6 +534,198 @@ TEST(TestAppendToLongList)
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
 
+TEST(TestListDiffAppendChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  auto& appendee = diff.InsertChildElement(2);
+  appendee.SetTag("div");
+  appendee.SetKey("c");
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+      },
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffPrependChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  auto& appendee = diff.InsertChildElement(0);
+  appendee.SetTag("div");
+  appendee.SetKey("a");
+
+  ExpectChildDiff(
+      {
+          {"div", "b"},
+          {"div", "c"},
+      },
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffRemoveOnlyChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.RemoveChild(0);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+      },
+      {},
+      update
+  );
+END_TEST
+
+TEST(TestListDiffSwap)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.MoveChild(0, 1);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+      },
+      {
+          {"div", "b"},
+          {"div", "a"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffInsertMiddle)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  auto& inserted = diff.InsertChildElement(1);
+  inserted.SetTag("div");
+  inserted.SetKey("b");
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "c"},
+      },
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffRemoveFirstChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.RemoveChild(0);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      {
+          {"div", "b"},
+          {"div", "c"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffRemoveLastChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.RemoveChild(2);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      {
+          {"div", "a"},
+          {"div", "b"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffRemoveMiddleChild)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.RemoveChild(1);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+      },
+      {
+          {"div", "a"},
+          {"div", "c"},
+      },
+      update
+  );
+END_TEST
+
+TEST(TestListDiffRemoveMultiple)
+  auto update = TreeUpdate();
+  auto& diff = update.UpdateRootElement();
+  diff.RemoveChild(0);
+  diff.RemoveChild(2);
+  diff.RemoveChild(4);
+
+  ExpectChildDiff(
+      {
+          {"div", "a"},
+          {"div", "b"},
+          {"div", "c"},
+          {"div", "d"},
+          {"div", "e"},
+      },
+      {
+          {"div", "b"},
+          {"div", "d"},
+      },
+      update
+  );
+END_TEST
+
+void TestChildListDiffing() {
+  // Adding things
+  TestListDiffAppendChild();
+  TestListDiffPrependChild();
+  TestListDiffInsertMiddle();
+
+  // Removing things
+  TestListDiffRemoveOnlyChild();
+  TestListDiffRemoveFirstChild();
+  TestListDiffRemoveLastChild();
+  TestListDiffRemoveMiddleChild();
+  TestListDiffRemoveMultiple();
+
+  // Moving things
+  TestListDiffSwap();
+}
+
 void TestKeyedHtmlDiffing() {
   TestKeyedCreateRootDiff();
   TestKeyedCreateFirstChildDiff();
@@ -573,6 +765,7 @@ int main() {
   TestAddEventListeners();
   TestPreserveEventListeners();
   TestDispatchEvent();
+  TestChildListDiffing();
   cout << "End tests" << endl;
   return 0;
 }
