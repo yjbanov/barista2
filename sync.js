@@ -10,17 +10,17 @@ function applyElementUpdate(element, update) {
         }
     }
     var removes = null;
-    if (update.hasOwnProperty("removes")) {
+    if (update.hasOwnProperty("remove")) {
         removes = [];
-        var removeIndices = update["removes"];
+        var removeIndices = update["remove"];
         for (var i = 0; i < removeIndices.length; i++) {
             removes.push(element.childNodes.item(removeIndices[i]));
         }
     }
     var moves = null;
-    if (update.hasOwnProperty("moves")) {
+    if (update.hasOwnProperty("move")) {
         moves = [];
-        var moveIndices = update["moves"];
+        var moveIndices = update["move"];
         for (var i = 0; i < moveIndices.length; i++) {
             moves.push(element.childNodes.item(moveIndices[i]));
         }

@@ -11,7 +11,7 @@
 using namespace std;
 using namespace barista;
 
-class SampleAppState : public State {
+class SampleAppState : public State, public enable_shared_from_this<SampleAppState>{
  public:
   bool greet = true;
   int rowCounter = 1;
@@ -33,15 +33,16 @@ class SampleAppState : public State {
     auto message = El("div");
     auto text = greet ? Tx("Hello") : Tx("Ciao!!!");
 
+    auto thiz = shared_from_this();
     for (auto r = rows.begin(); r != rows.end(); r++) {
       auto row = El("div");
       row->SetKey(to_string(*r));
       row->SetText("row #" + to_string(*r));
       auto removeButton = El("button");
       removeButton->SetText("Remove");
-      removeButton->AddEventListener("click", [&]() {
-        rows.erase(r);
-        ScheduleUpdate();
+      removeButton->AddEventListener("click", [r, thiz]() {
+        thiz->rows.erase(r);
+        thiz->ScheduleUpdate();
       });
       row->AddChild(removeButton);
       message->AddChild(row);
