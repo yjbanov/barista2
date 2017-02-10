@@ -1,3 +1,4 @@
+var Module = {};
 
 function applyElementUpdate(element, update) {
     if (update.hasOwnProperty("update-elements")) {
@@ -87,4 +88,87 @@ function applyElementUpdate(element, update) {
             }
         }
     }
+}
+
+
+function printPerf(category, start, end) {
+    console.log('>>>', category, ':', end - start, 'ms');
+}
+
+var compileStart = 0;
+
+function enteredMain() {
+    var compileEnd = performance.now();
+    printPerf('time to main', compileStart, compileEnd);
+}
+
+function allReady() {
+    var renderFrame = Module.cwrap('RenderFrame', 'string', []);
+    var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
+    var host = document.querySelector('#host');
+
+    function syncFromNative() {
+        console.log('>>> ====== syncFromNative =======');
+        var renderStart = performance.now();
+        var json = renderFrame();
+        console.log(json);
+        var renderEnd = performance.now();
+        printPerf('renderFrame', renderStart, renderEnd);
+        console.log('>>> diff size: ', json.length);
+
+        var jsonParseStart = performance.now();
+        var diff = JSON.parse(json);
+        if (!diff) {
+            return;
+        }
+        var jsonParseEnd = performance.now();
+        printPerf('parseJson', jsonParseStart, jsonParseEnd);
+
+        if (diff.hasOwnProperty("create")) {
+            var createStart = performance.now();
+            host.innerHTML = diff["create"];
+            var createEnd = performance.now();
+            printPerf('create', createStart, createEnd);
+        } else if (diff.hasOwnProperty("update")) {
+            var updateStart = performance.now();
+            applyElementUpdate(host.firstElementChild, diff["update"]);
+            var updateEnd = performance.now();
+            printPerf('update', updateStart, updateEnd);
+        }
+    }
+
+    host.addEventListener("click", function(event) {
+        // Look for the nearest parent with a _bid, then dispatch to it.
+        var bid = null;
+        var parent = event.target;
+        while(bid == null && parent && parent != document) {
+            bid = parent.getAttribute("_bid");
+            parent = parent.parentNode;
+        }
+        if (bid) {
+            dispatchEvent("click", bid);
+            syncFromNative();
+        } else {
+            console.log(">>> caught event on target with no _bid:", event.target);
+        }
+    });
+    syncFromNative();
+}
+
+function loadApp(fileNameWithoutExtension) {
+    var loadStart = performance.now();
+    fetch(`${fileNameWithoutExtension}.wasm`)
+        .then(function (response) {
+            return response.arrayBuffer();
+        })
+        .then(function (bytes) {
+            var loadEnd = performance.now();
+            printPerf('load', loadStart, loadEnd);
+
+            compileStart = performance.now();
+            Module['wasmBinary'] = bytes;
+            var script = document.createElement('script');
+            script.src = `${fileNameWithoutExtension}.js`;
+            document.body.appendChild(script);
+        });
 }

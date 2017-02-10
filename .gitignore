@@ -21,3 +21,6 @@ unittests
 packages
 pubspec.lock
 .packages
+
+giant.cpp
+giant.js
