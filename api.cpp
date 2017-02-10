@@ -306,6 +306,11 @@ void RenderMultiChildParent::Update(shared_ptr<Node> configPtr, ElementUpdate& u
       auto baseEntry = keyMap.find(key);
       if (baseEntry != keyMap.end()) {
         baseChild = currentChildren.begin() + baseEntry->second;
+        shared_ptr<RenderNode> currentChild = *(get<0>(*baseChild));
+        if (currentChild->CanUpdateUsing(node)) {
+          auto& childUpdate = update.UpdateChildElement(get<1>(*baseChild));
+          currentChild->Update(node, childUpdate);
+        }
       }
     } else {
       // Start with afterLastUsedUnkeyedChild and scan until the first child

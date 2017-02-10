@@ -83,6 +83,9 @@ class RenderElement : public RenderMultiChildParent {
  private:
   // Monotonically increasing element ID counter.
   static int64_t _bidCounter;
+  static int64_t NextBid() {
+    return _bidCounter++;
+  }
 };
 
 // A little boilerplate-reducing DSL

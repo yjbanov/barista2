@@ -1,28 +1,72 @@
 <!doctype html>
 <html>
+<head>
+    <title>WebAssembly Demo</title>
+    <link href="main.css" rel="stylesheet">
+</head>
 <body>
 <div id="host"></div>
 
+<!--
+main.js instrumentation code:
+
+      var ssss = performance.now();
+      var mmm = new WebAssembly.Module(getBinary());
+      var eeee = performance.now();
+      console.log('>>> WebAssembly.Module', eeee - ssss, 'ms');
+
+      var sss = performance.now();
+      instance = new WebAssembly.Instance(mmm, info);
+      var eee = performance.now();
+      console.log('>>> WebAssembly.Instance', eee - sss, 'ms');
+-->
+
 <script type="application/javascript" src="sync.js"></script>
 <script type="application/javascript">
+
+function printPerf(category, start, end) {
+    console.log('>>>', category, ':', end - start, 'ms');
+}
+
+var compileStart = 0;
+
+function enteredMain() {
+    var compileEnd = performance.now();
+    printPerf('time to main', compileStart, compileEnd);
+}
+
 function allReady() {
     var renderFrame = Module.cwrap('RenderFrame', 'string', []);
     var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
     var host = document.querySelector('#host');
 
     function syncFromNative() {
+        console.log('>>> ====== syncFromNative =======');
+        var renderStart = performance.now();
         var json = renderFrame();
-        console.log('>>> diff: ', json);
+        console.log(json);
+        var renderEnd = performance.now();
+        printPerf('renderFrame', renderStart, renderEnd);
+        console.log('>>> diff size: ', json.length);
+
+        var jsonParseStart = performance.now();
         var diff = JSON.parse(json);
         if (!diff) {
             return;
         }
+        var jsonParseEnd = performance.now();
+        printPerf('parseJson', jsonParseStart, jsonParseEnd);
+
         if (diff.hasOwnProperty("create")) {
-            console.log(diff["create"]);
+            var createStart = performance.now();
             host.innerHTML = diff["create"];
+            var createEnd = performance.now();
+            printPerf('create', createStart, createEnd);
         } else if (diff.hasOwnProperty("update")) {
-            console.log(diff["update"]);
+            var updateStart = performance.now();
             applyElementUpdate(host.firstElementChild, diff["update"]);
+            var updateEnd = performance.now();
+            printPerf('update', updateStart, updateEnd);
         }
     }
 
@@ -45,12 +89,17 @@ function allReady() {
 }
 </script>
 <script type="application/javascript">
+    var loadStart = performance.now();
     var Module = {};
     fetch('main.wasm')
         .then(function (response) {
             return response.arrayBuffer();
         })
         .then(function (bytes) {
+            var loadEnd = performance.now();
+            printPerf('load', loadStart, loadEnd);
+
+            compileStart = performance.now();
             Module['wasmBinary'] = bytes;
             var script = document.createElement('script');
             script.src = "main.js";

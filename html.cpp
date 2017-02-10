@@ -57,7 +57,7 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
       if (oldConfiguration->_bid != "") {
         newConfiguration->_bid = oldConfiguration->_bid;
       } else {
-        newConfiguration->_bid = to_string(_bidCounter++);
+        newConfiguration->_bid = to_string(NextBid());
         update.SetBaristaId(newConfiguration->_bid);
       }
     }
@@ -83,7 +83,18 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
       }
     }
 
-    // TODO(yjbanov): implement class diffing
+    if (!newConfiguration->_classNames.empty()) {
+      if (newConfiguration->_classNames != oldConfiguration->_classNames) {
+        auto ibegin = newConfiguration->_classNames.begin();
+        auto iend = newConfiguration->_classNames.end();
+        for (auto i = ibegin; i != iend; i++) {
+          update.AddClassName(*i);
+        }
+      }
+    } else if (!oldConfiguration->_classNames.empty()) {
+      update.AddClassName("__clear__");
+    }
+
     // TODO(yjbanov): implement style diffing
   } else {
     update.SetTag(newConfiguration->GetTag());
@@ -95,7 +106,7 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
       update.SetBaristaId(newConfiguration->_bid);
     }
     if (newConfiguration->_eventListeners.size() > 0) {
-      newConfiguration->_bid = to_string(_bidCounter++);
+      newConfiguration->_bid = to_string(NextBid());
       update.SetBaristaId(newConfiguration->_bid);
     }
     update.SetText(newConfiguration->_text);

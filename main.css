@@ -1,0 +1,23 @@
+.table {
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.cell {
+    width: 100px;
+}
+
+.status-cell {
+    display: flex;
+    flex-direction: row;
+    width: 200px;
+}
+
+.active-status {
+    background-color: #89C35C;
+}

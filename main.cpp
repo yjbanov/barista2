@@ -11,41 +11,104 @@
 using namespace std;
 using namespace barista;
 
+vector<string> statuses = {
+    "Planned",
+    "Pitched",
+    "Won",
+    "Lost",
+};
+
+vector<string> randomStrings = {
+    "Foo",
+    "Bar",
+    "Baz",
+    "Qux",
+    "Quux",
+    "Garply",
+    "Waldo",
+    "Fred",
+    "Plugh",
+    "Waldo",
+    "Xyzzy",
+    "Thud",
+    "Cruft",
+};
+
+class Row {
+ public:
+  vector<string> columns;
+  string status;
+};
+
 class SampleAppState : public State, public enable_shared_from_this<SampleAppState>{
  public:
+  int keyCounter = 1;
   bool greet = true;
-  int rowCounter = 1;
-  list<int> rows;
+  map<int, Row> rows;
 
   SampleAppState() {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
       AddRow();
     }
   };
 
   void AddRow() {
-    rows.push_back(rowCounter++);
+    Row row;
+    row.status = statuses[rand() % statuses.size()];
+    int len = (int) randomStrings.size();
+    for (int i = 0; i < 10; i++) {
+      row.columns.push_back(randomStrings[rand() % len]);
+    }
+    rows[keyCounter++] = row;
   }
 
   virtual shared_ptr<Node> Build() {
     auto container = El("div");
 
-    auto message = El("div");
     auto text = greet ? Tx("Hello") : Tx("Ciao!!!");
 
+    auto table = El("div");
+    table->SetKey("table");
+    table->AddClassName("table");
     auto thiz = shared_from_this();
     for (auto r = rows.begin(); r != rows.end(); r++) {
-      auto row = El("div");
-      row->SetKey(to_string(*r));
-      row->SetText("row #" + to_string(*r));
-      auto removeButton = El("button");
+      auto row = table->El("div");
+      int key = r->first;
+      row->SetKey(to_string(key));
+      row->AddClassName("row");
+
+      auto keyCell = row->El("div");
+      keyCell->AddClassName("cell");
+      keyCell->SetText(to_string(key));
+
+      for (string cellData : r->second.columns) {
+        auto cell = row->El("div");
+        cell->AddClassName("cell");
+        cell->SetText(cellData);
+      }
+
+      auto statusCell = row->El("div");
+      statusCell->AddClassName("status-cell");
+      for (string status : statuses) {
+        auto statusButton = statusCell->El("button");
+        if (status == r->second.status) {
+          statusButton->AddClassName("active-status");
+        }
+        statusButton->SetText(status);
+        statusButton->AddEventListener("click", [key, thiz, status]() {
+          cout << "Changing status from " << thiz->rows[key].status << " to " << status << endl;
+          thiz->rows[key].status = status;
+          thiz->ScheduleUpdate();
+        });
+      }
+
+      auto removeButton = row->El("div")->El("button");
       removeButton->SetText("Remove");
-      removeButton->AddEventListener("click", [r, thiz]() {
-        thiz->rows.erase(r);
+      // TODO(yjbanov): this probably creates a cycle between <button> and SampleAppState
+      removeButton->AddEventListener("click", [key, thiz]() {
+        thiz->rows.erase(key);
         thiz->ScheduleUpdate();
       });
-      row->AddChild(removeButton);
-      message->AddChild(row);
     }
 
     auto button = El("button");
@@ -59,7 +122,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
 
     container->AddChild(button);
     container->AddChild(text);
-    container->AddChild(message);
+    container->AddChild(table);
     return container;
   }
 };
@@ -91,6 +154,9 @@ void DispatchEvent(char* type, char* baristaId) {
 }
 
 int main() {
+  EM_ASM(
+      enteredMain();
+  );
   tree = make_shared<Tree>(make_shared<SampleApp>());
   EM_ASM(
     allReady();

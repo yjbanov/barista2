@@ -42,8 +42,14 @@ function applyElementUpdate(element, update) {
     if (update.hasOwnProperty("classes")) {
         // TODO(yjbanov): properly diff the class list.
         var classes = update['classes'];
-        for (var i = 0; i < classes.length; i++) {
-            element.classList.add(classes[i]);
+        if (classes.length > 0) {
+            element.className = "";
+            for (var i = 0; i < classes.length; i++) {
+                var className = classes[i];
+                if (className != '__clear__') {
+                    element.classList.add(className);
+                }
+            }
         }
     }
 
