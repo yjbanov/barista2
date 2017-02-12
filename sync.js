@@ -2,39 +2,39 @@ var Module = {};
 
 function applyElementUpdate(element, update) {
     if (update.hasOwnProperty("update-elements")) {
-        var childUpdates = update["update-elements"];
-        for (var i = 0; i < childUpdates.length; i++) {
-            var childUpdate = childUpdates[i];
-            var index = childUpdate["index"];
-            var child = element.childNodes.item(index);
+        let childUpdates = update["update-elements"];
+        for (let i = 0; i < childUpdates.length; i++) {
+            let childUpdate = childUpdates[i];
+            let index = childUpdate["index"];
+            let child = element.childNodes.item(index);
             applyElementUpdate(child, childUpdate);
         }
     }
-    var removes = null;
+    let removes = null;
     if (update.hasOwnProperty("remove")) {
         removes = [];
-        var removeIndices = update["remove"];
-        for (var i = 0; i < removeIndices.length; i++) {
+        let removeIndices = update["remove"];
+        for (let i = 0; i < removeIndices.length; i++) {
             removes.push(element.childNodes.item(removeIndices[i]));
         }
     }
-    var moves = null;
+    let moves = null;
     if (update.hasOwnProperty("move")) {
         moves = [];
-        var moveIndices = update["move"];
-        for (var i = 0; i < moveIndices.length; i++) {
+        let moveIndices = update["move"];
+        for (let i = 0; i < moveIndices.length; i++) {
             moves.push(element.childNodes.item(moveIndices[i]));
         }
     }
-    var insertions = null;
-    var insertionPoints = null;
+    let insertions = null;
+    let insertionPoints = null;
     if (update.hasOwnProperty("insert")) {
         insertions = [];
         insertionPoints = [];
-        var descriptors = update["insert"];
-        for (var i = 0; i < descriptors.length; i++) {
-            var html = descriptors[i]["html"];
-            var insertionIndex = descriptors[i]["index"];
+        let descriptors = update["insert"];
+        for (let i = 0; i < descriptors.length; i++) {
+            let html = descriptors[i]["html"];
+            let insertionIndex = descriptors[i]["index"];
             insertions.push(html);
             insertionPoints.push(element.childNodes.item(insertionIndex));
         }
@@ -42,11 +42,11 @@ function applyElementUpdate(element, update) {
 
     if (update.hasOwnProperty("classes")) {
         // TODO(yjbanov): properly diff the class list.
-        var classes = update['classes'];
+        let classes = update['classes'];
         if (classes.length > 0) {
             element.className = "";
-            for (var i = 0; i < classes.length; i++) {
-                var className = classes[i];
+            for (let i = 0; i < classes.length; i++) {
+                let className = classes[i];
                 if (className != '__clear__') {
                     element.classList.add(className);
                 }
@@ -55,20 +55,20 @@ function applyElementUpdate(element, update) {
     }
 
     if (removes != null) {
-        for (var i = 0; i < removes.length; i++) {
+        for (let i = 0; i < removes.length; i++) {
             removes[i].remove();
         }
     }
 
     if (moves != null) {
-        for (var i = 0; i < moves.length; i += 2) {
+        for (let i = 0; i < moves.length; i += 2) {
             element.insertBefore(moves[i + 1], moves[i]);
         }
     }
 
     if (insertions != null) {
-        for (var i = 0; i < insertions.length; i++) {
-            var template = document.createElement("template");
+        for (let i = 0; i < insertions.length; i++) {
+            let template = document.createElement("template");
             template.innerHTML = insertions[i];
             element.insertBefore(template.content.firstChild, insertionPoints[i]);
         }
@@ -81,8 +81,8 @@ function applyElementUpdate(element, update) {
         element.innerText = update["text"];
     }
     if (update.hasOwnProperty("attrs")) {
-        var attrs = update["attrs"];
-        for (var name in attrs) {
+        let attrs = update["attrs"];
+        for (let name in attrs) {
             if (attrs.hasOwnProperty(name)) {
                 element.setAttribute(name, attrs[name]);
             }
@@ -95,52 +95,52 @@ function printPerf(category, start, end) {
     console.log('>>>', category, ':', end - start, 'ms');
 }
 
-var compileStart = 0;
+let compileStart = 0;
 
 function enteredMain() {
-    var compileEnd = performance.now();
+    let compileEnd = performance.now();
     printPerf('time to main', compileStart, compileEnd);
 }
 
 function allReady() {
-    var renderFrame = Module.cwrap('RenderFrame', 'string', []);
-    var dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
-    var host = document.querySelector('#host');
+    let renderFrame = Module.cwrap('RenderFrame', 'string', []);
+    let dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
+    let host = document.querySelector('#host');
 
     function syncFromNative() {
         console.log('>>> ====== syncFromNative =======');
-        var renderStart = performance.now();
-        var json = renderFrame();
+        let renderStart = performance.now();
+        let json = renderFrame();
         console.log(json);
-        var renderEnd = performance.now();
+        let renderEnd = performance.now();
         printPerf('renderFrame', renderStart, renderEnd);
         console.log('>>> diff size: ', json.length);
 
-        var jsonParseStart = performance.now();
-        var diff = JSON.parse(json);
+        let jsonParseStart = performance.now();
+        let diff = JSON.parse(json);
         if (!diff) {
             return;
         }
-        var jsonParseEnd = performance.now();
+        let jsonParseEnd = performance.now();
         printPerf('parseJson', jsonParseStart, jsonParseEnd);
 
         if (diff.hasOwnProperty("create")) {
-            var createStart = performance.now();
+            let createStart = performance.now();
             host.innerHTML = diff["create"];
-            var createEnd = performance.now();
+            let createEnd = performance.now();
             printPerf('create', createStart, createEnd);
         } else if (diff.hasOwnProperty("update")) {
-            var updateStart = performance.now();
+            let updateStart = performance.now();
             applyElementUpdate(host.firstElementChild, diff["update"]);
-            var updateEnd = performance.now();
+            let updateEnd = performance.now();
             printPerf('update', updateStart, updateEnd);
         }
     }
 
     host.addEventListener("click", function(event) {
         // Look for the nearest parent with a _bid, then dispatch to it.
-        var bid = null;
-        var parent = event.target;
+        let bid = null;
+        let parent = event.target;
         while(bid == null && parent && parent != document) {
             bid = parent.getAttribute("_bid");
             parent = parent.parentNode;
@@ -156,18 +156,18 @@ function allReady() {
 }
 
 function loadApp(fileNameWithoutExtension) {
-    var loadStart = performance.now();
+    let loadStart = performance.now();
     fetch(`${fileNameWithoutExtension}.wasm`)
         .then(function (response) {
             return response.arrayBuffer();
         })
         .then(function (bytes) {
-            var loadEnd = performance.now();
+            let loadEnd = performance.now();
             printPerf('load', loadStart, loadEnd);
 
             compileStart = performance.now();
             Module['wasmBinary'] = bytes;
-            var script = document.createElement('script');
+            let script = document.createElement('script');
             script.src = `${fileNameWithoutExtension}.js`;
             document.body.appendChild(script);
         });
