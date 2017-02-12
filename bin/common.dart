@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:process/process.dart';
 
 final pm = new LocalProcessManager();
-bool compileToWasm = false;
 int optimizerLevel = 3;
 
 Future<Null> gzip(String file) async {
@@ -19,6 +18,8 @@ Future<Null> cc(dynamic source, String output,
     '-O${optimizerLevel}',
     '-s',
     'NO_EXIT_RUNTIME=1',
+    '-s',
+    'WASM=1',
   ];
 
   if (optimizerLevel < 3) {
@@ -27,13 +28,6 @@ Future<Null> cc(dynamic source, String output,
       'DEMANGLE_SUPPORT=1',
       '-s',
       'ASSERTIONS=2',
-    ]);
-  }
-
-  if (compileToWasm) {
-    args.addAll([
-      '-s',
-      'WASM=1',
     ]);
   }
 

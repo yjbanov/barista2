@@ -6,15 +6,12 @@ import 'common.dart';
 
 Future<Null> main(List<String> rawArgs) async {
   var argParser = new ArgParser()
-    ..addFlag('wasm')
     ..addOption('optimizer-level', abbr: 'O', callback: (String v) {
       if (v != null) {
         optimizerLevel = int.parse(v);
       }
     });
   var args = argParser.parse(rawArgs);
-
-  compileToWasm = args['wasm'];
 
   print('Building using ${await eval('which', ['emcc'])}');
 
@@ -68,9 +65,7 @@ Future<Null> main(List<String> rawArgs) async {
   }
 
   await gzip('main.js');
-  if (compileToWasm) {
-    await gzip('main.wasm');
-  }
+  await gzip('main.wasm');
 
   // Compile tests
   await cc('test.cpp', 'test.bc');
@@ -89,7 +84,5 @@ Future<Null> main(List<String> rawArgs) async {
   );
 
   await gzip('test_all.js');
-  if (compileToWasm) {
-    await gzip('test_all.wasm');
-  }
+  await gzip('test_all.wasm');
 }
