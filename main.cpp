@@ -47,7 +47,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
   map<int, Row> rows;
 
   SampleAppState() {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 500; i++) {
       AddRow();
     }
   };

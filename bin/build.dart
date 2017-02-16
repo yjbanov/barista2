@@ -41,6 +41,9 @@ Future<Null> main(List<String> rawArgs) async {
     ],
   );
 
+  await gzip('main.asm.js');
+  await gzip('main.wasm');
+
   if (new File('giant.cpp').existsSync()) {
     // Compile sample app
     await cc('giant.cpp', 'giant.bc');
@@ -60,12 +63,12 @@ Future<Null> main(List<String> rawArgs) async {
         '_main',
       ],
     );
+
+    await gzip('giant.asm.js');
+    await gzip('giant.wasm');
   } else {
     print('SKIPPING: giant.cpp (file not generated)');
   }
-
-  await gzip('main.js');
-  await gzip('main.wasm');
 
   // Compile tests
   await cc('test.cpp', 'test.bc');
@@ -83,6 +86,6 @@ Future<Null> main(List<String> rawArgs) async {
     'test_all.js',
   );
 
-  await gzip('test_all.js');
+  await gzip('test_all.asm.js');
   await gzip('test_all.wasm');
 }
