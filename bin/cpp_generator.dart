@@ -202,14 +202,14 @@ String toCppExpression(Binding b, {@required bool forStatefulWidget}) {
     return b.value is String ? '"${b.value}"' : '${b.value}';
   } else if (b is Expression) {
     if (forStatefulWidget) {
-      if (b.field.source == ParameterSource.input) {
-        return 'config->Get${capitalize(b.field.name)}()';
+      if (b.field.source == ValueSource.input) {
+        return 'config->Get${capitalize(b.field.variable.name)}()';
       } else {
-        return b.field.name;
+        return b.field.variable.name;
       }
     } else {
       // Stateless widgets always access fields from `this`.
-      return 'Get${capitalize(b.field.name)}()';
+      return 'Get${capitalize(b.field.variable.name)}()';
     }
   } else {
     throw 'oops';
@@ -260,7 +260,7 @@ class CppWidgetCodeEmitter {
       buf.writeln();
     }
 
-    for (Parameter input in metadata.inputs) {
+    for (Variable input in metadata.inputs) {
       addField(input.name, input.typeName);
     }
 
