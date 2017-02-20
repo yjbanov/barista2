@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:process/process.dart';
 
 final pm = new LocalProcessManager();
-int optimizerLevel = 3;
+String optimizerLevel = '3';
 
 Future<Null> gzip(String file) async {
   await exec('gzip', ['-k', '-f', file]);
@@ -22,7 +22,7 @@ Future<Null> cc(dynamic source, String output,
     'WASM=1',
   ];
 
-  if (optimizerLevel < 3) {
+  if (optimizerLevel == '0' || optimizerLevel == '1') {
     args.addAll([
       '-s',
       'DEMANGLE_SUPPORT=1',

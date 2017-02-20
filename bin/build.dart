@@ -8,10 +8,14 @@ Future<Null> main(List<String> rawArgs) async {
   var argParser = new ArgParser()
     ..addOption('optimizer-level', abbr: 'O', callback: (String v) {
       if (v != null) {
-        optimizerLevel = int.parse(v);
+        optimizerLevel = v;
+        const validOptmizerLevels = const ['0', '1', '2', '3', 's'];
+        if (!validOptmizerLevels.contains(optimizerLevel)) {
+          throw 'Invalid --optimizer-level. Must be one of ${validOptmizerLevels.join(', ')}';
+        }
       }
     });
-  var args = argParser.parse(rawArgs);
+  argParser.parse(rawArgs);
 
   print('Building using ${await eval('which', ['emcc'])}');
 
