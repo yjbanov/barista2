@@ -30,12 +30,20 @@ Future<Null> main(List<String> rawArgs) async {
   argParser.parse(rawArgs);
 
   App app = generateApp();
+  int totalWidgets = Widget.reusableWidgets.length + Widget.adHocWidgets.length;
   print('Generated:');
-  print('  ${Widget.reusableWidgets.length} reusable widgets');
-  print('  ${Widget.adHocWidgets.length} ad hoc widgets');
-  print('  ${TemplateNode.totalNodeCount} template nodes');
+  print('  ${totalWidgets} widgets, of which:');
+  print('    ${Widget.reusableWidgets.length} reusable');
+  print('    ${Widget.adHocWidgets.length} ad hoc');
+  print('  ${TemplateNode.totalNodeCount} template nodes, of which:');
+  TemplateNode.nodeTypeCounts.forEach((type, count) {
+    print('    ${count} ${type} nodes');
+  });
+  print('  Average nodes/template: ${TemplateNode.totalNodeCount / totalWidgets}');
   print('  ${TemplateNode.conditionalCount} conditionals');
+  print('  Average conditionals/template: ${TemplateNode.conditionalCount / totalWidgets}');
   print('  ${Field.fieldCount} fields');
+  print('  Average fields/widget: ${Field.fieldCount / totalWidgets}');
 
   new CppCodeEmitter('giant').render(app).forEach((String file, String code) {
     var cppFile = new File(file);
@@ -65,12 +73,14 @@ class Variable {
   // string are used to display data.
   final VariableType type;
   final String name;
+  final initialValue;
 
   String get typeName => '$type'.substring('$type'.indexOf('.') + 1);
 
   Variable({
     @required this.type,
     @required this.name,
+    @required this.initialValue,
   });
 }
 
@@ -180,7 +190,9 @@ class Literal extends Binding {
 class Expression extends Binding {
   final Field field;
 
-  Expression(Field field) : field = field, super(field.variable.type) {
+  Expression(Field field)
+      : field = field,
+        super(field.variable.type) {
     check(field != null, 'field is null');
   }
 
@@ -199,6 +211,10 @@ class Attribute {
 abstract class TemplateNode {
   static int totalNodeCount = 0;
   static int conditionalCount = 0;
+  static final Map<Type, int> nodeTypeCounts = {};
+
+  static int _keyCounter = 0;
+  final String key = '${_keyCounter++}';
 
   List<TemplateNode> children;
   Expression conditional;
@@ -206,9 +222,12 @@ abstract class TemplateNode {
   TemplateNode({@required this.children, @required this.conditional}) {
     totalNodeCount++;
     if (conditional != null) conditionalCount++;
+    nodeTypeCounts[this.runtimeType] ??= 0;
+    nodeTypeCounts[this.runtimeType]++;
   }
 
-  List<Field> get references => conditional != null ? [conditional.field] : const [];
+  List<Field> get references =>
+      conditional != null ? [conditional.field] : const [];
 
   void scan(void callback(TemplateNode node)) {
     callback(this);
@@ -256,7 +275,7 @@ class ElementNode extends TemplateNode {
   @override
   String toString() {
     var buf = new StringBuffer();
-    buf.write('<$tag');
+    buf.write('<$tag _bkey="$key"');
     for (Attribute attr in attrs) {
       buf.write(' ${attr.name}="${attr.binding}"');
     }
@@ -293,7 +312,8 @@ class WidgetNode extends TemplateNode {
     @required List<TemplateNode> children,
     @required Expression conditional,
   })
-      : text = children.isEmpty && widget.hasContent ? randomShortString() : null,
+      : text =
+            children.isEmpty && widget.hasContent ? randomShortString() : null,
         super(children: children, conditional: conditional) {
     for (Attribute arg in args) {
       bool foundMatchingInput = false;
@@ -326,7 +346,7 @@ class WidgetNode extends TemplateNode {
   String toString() {
     var buf = new StringBuffer();
     String tag = widget.metadata.name;
-    buf.write('<$tag');
+    buf.write('<$tag _bkey="$key"');
     for (Attribute arg in args) {
       buf.write(' ${arg.name}="${arg.binding}"');
     }
@@ -354,7 +374,34 @@ class ContentNode extends TemplateNode {
   ContentNode() : super(children: const [], conditional: null);
 
   @override
-  String toString() => '<content>';
+  String toString() => '<content _bkey="$key">';
+}
+
+// A button that flips a boolean field upon click.
+class ToggleButtonNode extends TemplateNode {
+  final Field controls;
+
+  String get text => 'Flip ${controls.variable.name}';
+
+  ToggleButtonNode({@required Field this.controls})
+      : super(
+          children: const [],
+          conditional: null,
+        );
+
+  @override
+  String toString() {
+    var buf = new StringBuffer();
+    buf.write('<button _bkey="$key"');
+    buf.writeln('>');
+    if (text != null) {
+      buf.writeln(indent(text));
+    }
+    buf.writeln(indent(super.toString()));
+    buf.writeln('</button>');
+
+    return buf.toString();
+  }
 }
 
 // A component with a child.
@@ -380,11 +427,11 @@ class Widget {
     @required this.hasContent,
     @required TemplateNode template,
   })
-    : template = template,
-      metadata = _generateComponentMetadata(
-        '${namePrefix}${_componentCounter++}',
-        from: template,
-      ) {
+      : template = template,
+        metadata = _generateComponentMetadata(
+          '${namePrefix}${_componentCounter++}',
+          from: template,
+        ) {
     if (_componentCounter > 5000) {
       throw 'Too many widgets generated: ${_componentCounter} widgets';
     }
@@ -458,13 +505,15 @@ Widget nextWidget() {
   Widget widget;
   if (shouldReuse) {
     widget = Widget.reusableWidgets[Widget.nextReusableWidgetIndex];
-    Widget.nextReusableWidgetIndex = (Widget.nextReusableWidgetIndex + 1) % Widget.reusableWidgets.length;
+    Widget.nextReusableWidgetIndex =
+        (Widget.nextReusableWidgetIndex + 1) % Widget.reusableWidgets.length;
   } else {
     widget = new WidgetGenerator(
       namePrefix: 'Widget',
       generatingStatefulWidget: rnd.nextBool(),
       withContent: true,
-    ).generate(depth: 4);
+    )
+        .generate(depth: 3);
   }
   return widget;
 }
@@ -477,13 +526,14 @@ List<Widget> chooseRandomChildWidgets(int min, int max) {
 }
 
 List<WidgetNode> randomTabs() {
-  return new List.generate(2 * multiplier, (int _) {
+  return new List.generate(4 * multiplier, (int _) {
     return new WidgetNode(
       widget: new WidgetGenerator(
         namePrefix: 'Tab',
         withContent: false,
         generatingStatefulWidget: false,
-      ).generate(depth: 7),
+      )
+          .generate(depth: 5),
       children: [],
       args: [],
       conditional: null,
@@ -492,7 +542,7 @@ List<WidgetNode> randomTabs() {
 }
 
 List<WidgetNode> randomScreens() {
-  return new List.generate(2 * multiplier, (int _) {
+  return new List.generate(4 * multiplier, (int _) {
     ElementNode screenTemplate = new ElementNode(
       tag: 'div',
       attrs: [],
@@ -541,7 +591,6 @@ class WidgetGenerator {
   final bool generatingStatefulWidget;
   final String namePrefix;
   final bool withContent;
-  bool contentNodeGenerated = false;
 
   WidgetGenerator({
     @required this.generatingStatefulWidget,
@@ -554,14 +603,14 @@ class WidgetGenerator {
     return new Widget(
       namePrefix: namePrefix,
       hasContent: withContent,
-      template: randomTemplateNode(
+      template: randomTemplate(
         depth: depth,
       ),
     );
   }
 
   String randomTag() {
-    const tags = const ['div', 'span', 'p', 'a'];
+    const tags = const ['div', 'span'];
     return tags[rnd.nextInt(tags.length)];
   }
 
@@ -573,16 +622,22 @@ class WidgetGenerator {
   int fieldNameCounter = 1;
 
   Variable randomVariable({@required VariableType ofType}) {
+    var initialValue = ofType == VariableType.bool
+      ? rnd.nextBool()
+      : randomShortString();
     return new Variable(
       name: 'field${fieldNameCounter++}',
       type: ofType,
+      initialValue: initialValue,
     );
   }
 
   Field randomField({@required VariableType ofType}) {
     return new Field(
       variable: randomVariable(ofType: ofType),
-      source: generatingStatefulWidget && rnd.nextBool() ? ValueSource.state : ValueSource.input,
+      source: generatingStatefulWidget && rnd.nextBool()
+          ? ValueSource.state
+          : ValueSource.input,
     );
   }
 
@@ -631,13 +686,14 @@ class WidgetGenerator {
   }
 
   Expression randomConditional(bool unconditional) {
-    if (!unconditional && rnd.nextInt(10) < 3) {
+    if (!unconditional && rnd.nextInt(10) < 4) {
       return new Expression(randomField(ofType: VariableType.bool));
     }
     return null;
   }
 
-  ElementNode randomElementNode({@required int depth, bool unconditional = false}) {
+  ElementNode randomElementNode(
+      {@required int depth, bool unconditional = false}) {
     return new ElementNode(
       tag: randomTag(),
       attrs: randomAttrs(),
@@ -649,11 +705,12 @@ class WidgetGenerator {
 
   Literal randomLiteral({@required VariableType ofType}) {
     return ofType == VariableType.string
-      ? new Literal.string('${rnd.nextInt(100)}')
-      : new Literal.bool(rnd.nextBool());
+        ? new Literal.string('${rnd.nextInt(100)}')
+        : new Literal.bool(rnd.nextBool());
   }
 
-  WidgetNode randomWidgetNode({@required int depth, bool unconditional = false}) {
+  WidgetNode randomWidgetNode(
+      {@required int depth, bool unconditional = false}) {
     Widget widget = nextWidget();
     var args = <Attribute>[];
 
@@ -687,23 +744,41 @@ class WidgetGenerator {
     );
   }
 
+  TemplateNode randomTemplate({@required int depth}) {
+    List<TemplateNode> children = [];
+
+    TemplateNode template = randomTemplateNode(depth: depth - 1);
+    children.add(template);
+
+    if (withContent) {
+      children.add(new ContentNode());
+    }
+
+    template.scan((node) {
+      if (node.conditional != null && node.conditional.field.source == ValueSource.state) {
+        if (node.conditional.field.variable.type != VariableType.bool) {
+          throw 'Conditional expression must be bool';
+        }
+        children.add(new ToggleButtonNode(controls: node.conditional.field));
+      }
+    });
+
+    return new ElementNode(
+      tag: 'div',
+      attrs: randomAttrs()..add(new Attribute('widget', new Literal.string('${namePrefix}${Widget._componentCounter}'))),
+      classes: randomClasses(),
+      children: children,
+      conditional: null,
+    );
+  }
+
   TemplateNode randomTemplateNode({
     @required int depth,
     bool unconditional = false,
   }) {
-    TemplateNode template;
-
-    if (withContent && !contentNodeGenerated) {
-      contentNodeGenerated = true;
-      template = randomElementNode(depth: depth, unconditional: unconditional);
-      template.children.add(new ContentNode());
-    } else {
-      template = rnd.nextBool()
-          ? randomElementNode(depth: depth, unconditional: unconditional)
-          : randomWidgetNode(depth: depth, unconditional: unconditional);
-    }
-
-    return template;
+    return rnd.nextBool()
+        ? randomElementNode(depth: depth, unconditional: unconditional)
+        : randomWidgetNode(depth: depth, unconditional: unconditional);
   }
 }
 

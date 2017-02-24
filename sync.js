@@ -1,5 +1,10 @@
 var Module = {};
 
+function printStats() {
+    console.log(document.querySelectorAll('*').length, 'elements');
+    console.log(document.querySelectorAll('*[widget]').length, 'widgets');
+}
+
 function applyElementUpdate(element, update) {
     if (update.hasOwnProperty("update-elements")) {
         let childUpdates = update["update-elements"];
@@ -7,6 +12,15 @@ function applyElementUpdate(element, update) {
             let childUpdate = childUpdates[i];
             let index = childUpdate["index"];
             let child = element.childNodes.item(index);
+            if (child == null) {
+                console.log('Element child', index, 'not found in:');
+                console.log(element);
+                let parent = element.parentNode;
+                while(parent.id != 'host') {
+                    console.log(parent);
+                    parent = parent.parentNode;
+                }
+            }
             applyElementUpdate(child, childUpdate);
         }
     }
@@ -111,7 +125,7 @@ function allReady() {
         console.log('>>> ====== syncFromNative =======');
         let renderStart = performance.now();
         let json = renderFrame();
-        console.log(json);
+        // console.log(json);
         let renderEnd = performance.now();
         printPerf('renderFrame', renderStart, renderEnd);
         console.log('>>> diff size: ', json.length);

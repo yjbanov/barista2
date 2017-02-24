@@ -132,34 +132,53 @@ class CppTemplateNodeGenerator {
     buf.writeln('    $s');
   }
 
-  String render({@required String parent}) {
+  String render() {
     buf = new StringBuffer();
     localVariableCounter = 1;
-    _renderChild(template, parent: parent);
+    var childVariableName = _renderChild(template, parent: null);
+    buf.writeln('return ${childVariableName};');
     return buf.toString();
   }
 
   String nextVariableName() => 'child${localVariableCounter++}';
 
-  void _renderChild(TemplateNode node, {@required String parent}) {
+  String _renderChild(TemplateNode node, {@required String parent}) {
     if (node is ElementNode) {
-      _renderElementNode(node, parent);
+      return _renderElementNode(node, parent);
     } else if (node is WidgetNode) {
-      _renderWidgetNode(node, parent);
+      return _renderWidgetNode(node, parent);
     } else if (node is ContentNode) {
-      _renderContentNode(parent);
+      return _renderContentNode(parent);
+    } else if (node is ToggleButtonNode) {
+      return _renderToggleButtonNode(node, parent);
     } else {
       throw 'oops';
     }
   }
 
-  void _renderElementNode(ElementNode node, String parent) {
+  String _renderToggleButtonNode(ToggleButtonNode node, String parent) {
+    var variableName = nextVariableName();
+    writeln('auto ${variableName} = El("button");');
+    writeln('${variableName}->SetKey("${node.key}");');
+    writeln('${variableName}->SetText("${node.text}");');
+    writeln('''
+      ${variableName}->AddEventListener("click", [&]() {
+        ${node.controls.variable.name} = !${node.controls.variable.name};
+        ScheduleUpdate();
+      });
+    '''.trim());
+    writeln('${parent}->AddChild(${variableName});');
+    return variableName;
+  }
+
+  String _renderElementNode(ElementNode node, String parent) {
     if (node.conditional != null) {
       var expression = toCppExpression(node.conditional, forStatefulWidget: forStatefulWidget);
       writeln('if (${expression}) {');
     }
     var variableName = nextVariableName();
     writeln('auto ${variableName} = El("${node.tag}");');
+    writeln('${variableName}->SetKey("${node.key}");');
     for (Attribute attr in node.attrs) {
       var expression = toCppExpression(attr.binding, forStatefulWidget: forStatefulWidget);
       writeln('${variableName}->SetAttribute("${attr.name}", ${expression});');
@@ -171,7 +190,9 @@ class CppTemplateNodeGenerator {
     if (node.text != null) {
       writeln('${variableName}->SetText("${node.text}");');
     }
-    writeln('${parent}->AddChild(${variableName});');
+    if (parent != null) {
+      writeln('${parent}->AddChild(${variableName});');
+    }
 
     for (var child in node.children) {
       _renderChild(child, parent: variableName);
@@ -180,9 +201,10 @@ class CppTemplateNodeGenerator {
     if (node.conditional != null) {
       writeln('}');
     }
+    return variableName;
   }
 
-  void _renderWidgetNode(WidgetNode node, String parent) {
+  String _renderWidgetNode(WidgetNode node, String parent) {
     if (node.conditional != null) {
       var expression = toCppExpression(node.conditional, forStatefulWidget: forStatefulWidget);
       writeln('if (${expression}) {');
@@ -190,6 +212,7 @@ class CppTemplateNodeGenerator {
     var variableName = nextVariableName();
     writeln(
         'auto ${variableName} = make_shared<${node.widget.metadata.name}>();');
+    writeln('${variableName}->SetKey("${node.key}");');
     for (Attribute attr in node.args) {
       var expression = toCppExpression(attr.binding, forStatefulWidget: forStatefulWidget);
       writeln('${variableName}->Set${capitalize(attr.name)}(${expression});');
@@ -197,7 +220,9 @@ class CppTemplateNodeGenerator {
     if (node.text != null) {
       writeln('${variableName}->AddChild(Tx("${node.text}"));');
     }
-    writeln('${parent}->AddChild(${variableName});');
+    if (parent != null) {
+      writeln('${parent}->AddChild(${variableName});');
+    }
 
     for (var child in node.children) {
       if (child == null) {
@@ -209,11 +234,15 @@ class CppTemplateNodeGenerator {
     if (node.conditional != null) {
       writeln('}');
     }
+    return variableName;
   }
 
   bool _debugIsContentNodeRendered = false;
 
-  void _renderContentNode(String parent) {
+  String _renderContentNode(String parent) {
+    if (parent == null) {
+      throw 'Content node must have a parent';
+    }
     if (_debugIsContentNodeRendered) {
       throw 'Multiple content nodes generated:\n${template}';
     }
@@ -223,6 +252,8 @@ class CppTemplateNodeGenerator {
     } else {
       writeln('${parent}->AddChild(content);');
     }
+
+    return null;
   }
 }
 
@@ -269,36 +300,38 @@ class CppWidgetCodeEmitter {
     void writeln(s) {
       buf.writeln('    $s');
     }
-    writeln('auto container = El("div");');
     writeln(new CppTemplateNodeGenerator(template: widget.template, forStatefulWidget: widget.isStateful)
-        .render(parent: 'container'));
-    writeln('return container;');
+        .render());
     return buf.toString();
   }
+
+  String _initialValue(Variable v) => v.type == VariableType.bool
+      ? v.initialValue.toString()
+      : '"${v.initialValue}"';
 
   String _generateStateFields() {
     return metadata.states
         .map((i) =>
-            '  ${i.typeName} ${i.name} = ${i.type == VariableType.bool ? "false" : '"${i.name}"'};\n')
+            '  ${i.typeName} ${i.name} = ${_initialValue(i)};\n')
         .join();
   }
 
   String _generateInputFields() {
     var buf = new StringBuffer();
 
-    void addField(String name, String type) {
-      buf.writeln('  ${type} ${name};');
+    void addField(String name, String type, String initialValue) {
+      buf.writeln('  ${type} ${name} = ${initialValue};');
       buf.writeln('  ${type} Get${capitalize(name)}() { return ${name};}');
       buf.writeln('  void Set${capitalize(name)}(${type} v) { ${name} = v;}');
       buf.writeln();
     }
 
     for (Variable input in metadata.inputs) {
-      addField(input.name, input.typeName);
+      addField(input.name, input.typeName, _initialValue(input));
     }
 
     if (widget.hasContent) {
-      addField('content', 'shared_ptr<Node>');
+      addField('content', 'shared_ptr<Node>', 'nullptr');
       buf.writeln('  void AddChild(shared_ptr<Node> v) { content = v;}');
     }
 
