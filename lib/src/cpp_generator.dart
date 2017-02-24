@@ -1,4 +1,5 @@
-part of app_generator;
+import 'package:meta/meta.dart';
+import 'generator.dart';
 
 class CppCodeEmitter {
   final String prefix;
