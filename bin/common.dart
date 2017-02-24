@@ -20,6 +20,8 @@ Future<Null> cc(dynamic source, String output,
     'NO_EXIT_RUNTIME=1',
     '-s',
     'WASM=1',
+    '-s',
+    'TOTAL_MEMORY=${16777216 * 32}', // ~500MB
   ];
 
   if (optimizerLevel == '0' || optimizerLevel == '1') {

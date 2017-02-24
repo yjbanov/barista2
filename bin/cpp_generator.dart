@@ -1,8 +1,55 @@
 part of app_generator;
 
-class CppCodeEmitter implements CodeEmitter {
-  @override
-  String render(App app) {
+class CppCodeEmitter {
+  final String prefix;
+
+  CppCodeEmitter(this.prefix);
+
+  Map<String, String> render(App app) {
+    return {
+      '${prefix}.cpp': _mainCode(),
+      '${prefix}_widgets.h': _widgetCode(app),
+    };
+  }
+
+  String _mainCode() {
+    return '''
+#include <emscripten/emscripten.h>
+#include "api.h"
+#include "${prefix}_widgets.h"
+
+shared_ptr<Tree> tree;
+
+// This is intentionally static so that the string is not
+// destroyed after it is returned to the JS side.
+string lastDiff;
+
+extern "C" {
+
+const char* RenderFrame() {
+  lastDiff = tree->RenderFrame(2);
+  return lastDiff.c_str();
+}
+
+void DispatchEvent(char* type, char* baristaId) {
+  tree->DispatchEvent(type, baristaId);
+}
+
+int main() {
+  EM_ASM(
+      enteredMain();
+  );
+  tree = make_shared<Tree>(make_shared<SampleApp>());
+  EM_ASM(
+    allReady();
+  );
+}
+
+}
+''';
+  }
+
+  String _widgetCode(App app) {
     var code = new StringBuffer();
     code.writeln(header);
 
@@ -21,8 +68,10 @@ class CppCodeEmitter implements CodeEmitter {
   }
 
   static const header = """
+#ifndef GIANT_APP_H
+#define GIANT_APP_H
+
 #include <iostream>
-#include <emscripten/emscripten.h>
 #include <list>
 #include <locale>
 #include <codecvt>
@@ -62,43 +111,18 @@ class SampleApp : public StatefulWidget {
   }
 };
 
-shared_ptr<Tree> tree;
-
-// This is intentionally static so that the string is not
-// destroyed after it is returned to the JS side.
-string lastDiff;
-
-extern "C" {
-
-const char* RenderFrame() {
-  lastDiff = tree->RenderFrame(2);
-  return lastDiff.c_str();
-}
-
-void DispatchEvent(char* type, char* baristaId) {
-  tree->DispatchEvent(type, baristaId);
-}
-
-int main() {
-  EM_ASM(
-      enteredMain();
-  );
-  tree = make_shared<Tree>(make_shared<SampleApp>());
-  EM_ASM(
-    allReady();
-  );
-}
-
-}
+#endif //GIANT_APP_H
 """;
 }
 
 class CppTemplateNodeGenerator {
+  final TemplateNode template;
+
   StringBuffer buf;
   int localVariableCounter = 1;
   bool forStatefulWidget;
 
-  CppTemplateNodeGenerator({@required this.forStatefulWidget});
+  CppTemplateNodeGenerator({@required this.template, @required this.forStatefulWidget});
 
   void write(String s) {
     buf.write('    $s');
@@ -108,10 +132,10 @@ class CppTemplateNodeGenerator {
     buf.writeln('    $s');
   }
 
-  String render(TemplateNode node, {@required String parent}) {
+  String render({@required String parent}) {
     buf = new StringBuffer();
     localVariableCounter = 1;
-    _renderChild(node, parent: parent);
+    _renderChild(template, parent: parent);
     return buf.toString();
   }
 
@@ -176,6 +200,9 @@ class CppTemplateNodeGenerator {
     writeln('${parent}->AddChild(${variableName});');
 
     for (var child in node.children) {
+      if (child == null) {
+        throw 'null child not allowed';
+      }
       _renderChild(child, parent: variableName);
     }
 
@@ -184,7 +211,13 @@ class CppTemplateNodeGenerator {
     }
   }
 
+  bool _debugIsContentNodeRendered = false;
+
   void _renderContentNode(String parent) {
+    if (_debugIsContentNodeRendered) {
+      throw 'Multiple content nodes generated:\n${template}';
+    }
+    _debugIsContentNodeRendered = true;
     if (forStatefulWidget) {
       writeln('${parent}->AddChild(config->GetContent());');
     } else {
@@ -237,8 +270,8 @@ class CppWidgetCodeEmitter {
       buf.writeln('    $s');
     }
     writeln('auto container = El("div");');
-    writeln(new CppTemplateNodeGenerator(forStatefulWidget: widget.isStateful)
-        .render(widget.template, parent: 'container'));
+    writeln(new CppTemplateNodeGenerator(template: widget.template, forStatefulWidget: widget.isStateful)
+        .render(parent: 'container'));
     writeln('return container;');
     return buf.toString();
   }

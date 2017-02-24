@@ -150,7 +150,10 @@ class MultiChildNode : public Node {
  public:
   MultiChildNode() : Node() {}
   vector<shared_ptr<Node>> GetChildren() { return _children; }
-  void AddChild(shared_ptr<Node> child) { _children.push_back(child); }
+  void AddChild(shared_ptr<Node> child) {
+    assert(child != nullptr);
+    _children.push_back(child);
+  }
 
  private:
   vector<shared_ptr<Node>> _children;

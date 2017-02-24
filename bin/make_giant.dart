@@ -30,9 +30,6 @@ Future<Null> main(List<String> rawArgs) async {
   argParser.parse(rawArgs);
 
   App app = generateApp();
-  print('----------------- GENERATED APP ------------------');
-  print(app.toString());
-  print('--------------------------------------------------');
   print('Generated:');
   print('  ${Widget.reusableWidgets.length} reusable widgets');
   print('  ${Widget.adHocWidgets.length} ad hoc widgets');
@@ -40,9 +37,10 @@ Future<Null> main(List<String> rawArgs) async {
   print('  ${TemplateNode.conditionalCount} conditionals');
   print('  ${Field.fieldCount} fields');
 
-  var code = new CppCodeEmitter().render(app);
-  var cppFile = new File("giant.cpp");
-  await cppFile.writeAsString(code.toString());
+  new CppCodeEmitter('giant').render(app).forEach((String file, String code) {
+    var cppFile = new File(file);
+    cppFile.writeAsStringSync(code.toString());
+  });
 }
 
 String randomShortString([int maxLength = 10]) {
@@ -363,8 +361,15 @@ class ContentNode extends TemplateNode {
 class Widget {
   static int _componentCounter = 0;
   static final adHocWidgets = <Widget>[];
-  static final reusableWidgets = <Widget>[];
   static int nextReusableWidgetIndex = 0;
+
+  /// The count is incremented prior to adding a reusable widget in the list.
+  ///
+  /// This is because we want to use the count to stop generating new widgets
+  /// when we have reached the limit, however, we do not want to add a widget
+  /// in the list during generation to avoid cycles.
+  static int reusableWidgetCount = 0;
+  static final reusableWidgets = <Widget>[];
 
   final bool hasContent;
   final ComponentMetadata metadata;
@@ -388,6 +393,29 @@ class Widget {
       reusableWidgets.add(this);
     } else {
       adHocWidgets.add(this);
+    }
+
+    // Check template structure
+    bool hasContentNode = false;
+    template.scan((TemplateNode node) {
+      if (node is WidgetNode && node.widget.hasContent) {
+        if (node.children.length != 1) {
+          throw 'Reusable widget must have content of 1';
+        }
+
+        var content = node.children.single;
+        if (content.conditional != null) {
+          throw 'Reusable widget content must be unconditional';
+        }
+      }
+
+      if (node is ContentNode) {
+        hasContentNode = true;
+      }
+    });
+
+    if (hasContent && !hasContentNode) {
+      throw 'Widget declares to have content but its template is missing a content node';
     }
   }
 
@@ -421,16 +449,12 @@ class Widget {
   }
 }
 
-abstract class CodeEmitter {
-  String render(App app);
-}
-
 // Picks a random widget from [reusableWidgets], or generates a new one.
 Widget nextWidget() {
   // Reuse only if we have at least 10 reusable widgets and either we have
   // maxed out on widgets or at 20% rate.
-  bool shouldReuse = Widget.reusableWidgets.length > 2 * multiplier &&
-      (Widget.reusableWidgets.length >= 20 * multiplier || rnd.nextInt(10) < 2);
+  bool shouldReuse = Widget.reusableWidgetCount > 2 * multiplier &&
+      (Widget.reusableWidgetCount >= 20 * multiplier || rnd.nextInt(10) < 2);
   Widget widget;
   if (shouldReuse) {
     widget = Widget.reusableWidgets[Widget.nextReusableWidgetIndex];
@@ -517,6 +541,7 @@ class WidgetGenerator {
   final bool generatingStatefulWidget;
   final String namePrefix;
   final bool withContent;
+  bool contentNodeGenerated = false;
 
   WidgetGenerator({
     @required this.generatingStatefulWidget,
@@ -525,6 +550,7 @@ class WidgetGenerator {
   });
 
   Widget generate({@required int depth}) {
+    Widget.reusableWidgetCount++;
     return new Widget(
       namePrefix: namePrefix,
       hasContent: withContent,
@@ -588,33 +614,36 @@ class WidgetGenerator {
     );
   }
 
-  List<TemplateNode> randomChildren(int level) {
-    int childCount = rnd.nextInt(level);
+  TemplateNode randomChild({@required int depth, bool unconditional = false}) {
+    if (depth <= 1) {
+      return randomElementNode(depth: depth, unconditional: unconditional);
+    } else {
+      return randomTemplateNode(depth: depth, unconditional: unconditional);
+    }
+  }
+
+  List<TemplateNode> randomChildren({@required int depth}) {
+    int childCount = rnd.nextInt(depth);
     var children = new List.generate(childCount, (int _) {
-      if (level <= 1) {
-        return randomElementNode(level - 1);
-      } else {
-        return randomTemplateNode(
-            depth: level - 1);
-      }
+      return randomChild(depth: depth - 1);
     });
     return children;
   }
 
-  Expression randomConditional() {
-    if (rnd.nextInt(10) < 3) {
+  Expression randomConditional(bool unconditional) {
+    if (!unconditional && rnd.nextInt(10) < 3) {
       return new Expression(randomField(ofType: VariableType.bool));
     }
     return null;
   }
 
-  ElementNode randomElementNode(int level) {
+  ElementNode randomElementNode({@required int depth, bool unconditional = false}) {
     return new ElementNode(
       tag: randomTag(),
       attrs: randomAttrs(),
       classes: randomClasses(),
-      children: randomChildren(level),
-      conditional: randomConditional(),
+      children: randomChildren(depth: depth),
+      conditional: randomConditional(unconditional),
     );
   }
 
@@ -624,7 +653,7 @@ class WidgetGenerator {
       : new Literal.bool(rnd.nextBool());
   }
 
-  WidgetNode randomWidgetNode(int level) {
+  WidgetNode randomWidgetNode({@required int depth, bool unconditional = false}) {
     Widget widget = nextWidget();
     var args = <Attribute>[];
 
@@ -652,24 +681,26 @@ class WidgetGenerator {
 
     return new WidgetNode(
       widget: widget,
-      children: randomChildren(level),
+      children: [randomChild(depth: depth, unconditional: true)],
       args: args,
-      conditional: randomConditional(),
+      conditional: randomConditional(unconditional),
     );
   }
 
   TemplateNode randomTemplateNode({
     @required int depth,
+    bool unconditional = false,
   }) {
     TemplateNode template;
 
-    if (withContent) {
-      template = randomElementNode(depth);
+    if (withContent && !contentNodeGenerated) {
+      contentNodeGenerated = true;
+      template = randomElementNode(depth: depth, unconditional: unconditional);
       template.children.add(new ContentNode());
     } else {
       template = rnd.nextBool()
-          ? randomElementNode(depth)
-          : randomWidgetNode(depth);
+          ? randomElementNode(depth: depth, unconditional: unconditional)
+          : randomWidgetNode(depth: depth, unconditional: unconditional);
     }
 
     return template;

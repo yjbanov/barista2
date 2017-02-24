@@ -27,8 +27,50 @@
 					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="libtest">
-				<Option output="/Users/yjbanov/code/barista2/liblibtest.a" prefix_auto="0" extension_auto="0"/>
+			<Target title="test_giant">
+				<Option output="/Users/yjbanov/code/barista2/test_giant" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 test_giant"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="test_giant/fast">
+				<Option output="/Users/yjbanov/code/barista2/test_giant" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 test_giant/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="libgiantwidgets">
+				<Option output="/Users/yjbanov/code/barista2/liblibgiantwidgets.a" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/Users/yjbanov/code/barista2"/>
 				<Option object_output="./"/>
 				<Option type="2"/>
@@ -42,14 +84,14 @@
 					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libtest"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libgiantwidgets"/>
 					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
-			<Target title="libtest/fast">
-				<Option output="/Users/yjbanov/code/barista2/liblibtest.a" prefix_auto="0" extension_auto="0"/>
+			<Target title="libgiantwidgets/fast">
+				<Option output="/Users/yjbanov/code/barista2/liblibgiantwidgets.a" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/Users/yjbanov/code/barista2"/>
 				<Option object_output="./"/>
 				<Option type="2"/>
@@ -63,17 +105,7 @@
 					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libtest/fast"/>
-					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
-				</MakeCommands>
-			</Target>
-			<Target title="rebuild_cache">
-				<Option working_dir="/Users/yjbanov/code/barista2"/>
-				<Option type="4"/>
-				<MakeCommands>
-					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libgiantwidgets/fast"/>
 					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
@@ -116,6 +148,58 @@
 				</Compiler>
 				<MakeCommands>
 					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 unittests/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="libtest">
+				<Option output="/Users/yjbanov/code/barista2/liblibtest.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libtest"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="libtest/fast">
+				<Option output="/Users/yjbanov/code/barista2/liblibtest.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 libtest/fast"/>
 					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
 					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
@@ -215,6 +299,9 @@
 		<Unit filename="/Users/yjbanov/code/barista2/common.h">
 			<Option target="libbarista2"/>
 		</Unit>
+		<Unit filename="/Users/yjbanov/code/barista2/giant_widgets.h">
+			<Option target="libgiantwidgets"/>
+		</Unit>
 		<Unit filename="/Users/yjbanov/code/barista2/html.cpp">
 			<Option target="libbarista2"/>
 		</Unit>
@@ -247,6 +334,9 @@
 		</Unit>
 		<Unit filename="/Users/yjbanov/code/barista2/test_all.cpp">
 			<Option target="unittests"/>
+		</Unit>
+		<Unit filename="/Users/yjbanov/code/barista2/test_giant.cpp">
+			<Option target="test_giant"/>
 		</Unit>
 		<Unit filename="/Users/yjbanov/code/barista2/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>

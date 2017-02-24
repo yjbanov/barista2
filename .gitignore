@@ -22,5 +22,6 @@ packages
 pubspec.lock
 .packages
 
-giant.cpp
+giant_widgets.h
 giant.js
+test_giant

@@ -17,3 +17,9 @@ target_link_libraries(libtest libbarista2)
 
 add_executable(unittests test_all.cpp)
 target_link_libraries(unittests libbarista2 libtest)
+
+# Generated giant app test
+add_library(libgiantwidgets giant_widgets.h)
+set_target_properties(libgiantwidgets PROPERTIES LINKER_LANGUAGE CXX)
+add_executable(test_giant test_giant.cpp)
+target_link_libraries(test_giant libtest)
