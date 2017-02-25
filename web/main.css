@@ -1,3 +1,8 @@
+*[widget] {
+    border: 1px solid black;
+    padding: 1px;
+}
+
 .table {
     display: flex;
     flex-direction: column;
