@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Giant app benchmark</title>
+  </head>
+  <body>
+    <giant-app></giant-app>
+
+    <script type="application/dart" src="giant.dart"></script>
+    <script src="packages/browser/dart.js"></script>
+    <script>
+        function printStats() {
+            console.log(document.querySelectorAll('*').length, 'elements');
+            console.log(document.querySelectorAll('*[widget]').length, 'widgets');
+        }
+    </script>
+  </body>
+</html>

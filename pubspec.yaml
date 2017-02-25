@@ -1,4 +1,18 @@
 name: barista2
 dependencies:
+  angular2: any
   args: any
   process: any
+dev_dependencies:
+  browser: ^0.10.0
+  dart_to_js_script_rewriter: ^1.0.1
+transformers:
+- angular2:
+    platform_directives:
+    - 'package:angular2/common.dart#COMMON_DIRECTIVES'
+    platform_pipes:
+    - 'package:angular2/common.dart#COMMON_PIPES'
+    entry_points: web/giant.dart
+- dart_to_js_script_rewriter
+- $dart2js:
+    minify: true

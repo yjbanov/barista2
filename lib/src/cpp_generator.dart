@@ -1,15 +1,13 @@
 import 'package:meta/meta.dart';
 import 'generator.dart';
 
-class CppCodeEmitter {
-  final String prefix;
-
-  CppCodeEmitter(this.prefix);
+class CodeEmitter {
+  CodeEmitter();
 
   Map<String, String> render(App app) {
     return {
-      '${prefix}.cpp': _mainCode(),
-      '${prefix}_widgets.h': _widgetCode(app),
+      'giant.cpp': _mainCode(),
+      'giant_widgets.h': _widgetCode(app),
     };
   }
 
@@ -17,7 +15,7 @@ class CppCodeEmitter {
     return '''
 #include <emscripten/emscripten.h>
 #include "api.h"
-#include "${prefix}_widgets.h"
+#include "giant_widgets.h"
 
 shared_ptr<Tree> tree;
 
@@ -55,7 +53,7 @@ int main() {
     code.writeln(header);
 
     for (Widget widget in app.widgets) {
-      code.writeln(new CppWidgetCodeEmitter(widget)
+      code.writeln(new _WidgetCodeEmitter(widget)
           .render());
     }
 
@@ -116,14 +114,14 @@ class SampleApp : public StatefulWidget {
 """;
 }
 
-class CppTemplateNodeGenerator {
+class _TemplateNodeGenerator {
   final TemplateNode template;
 
   StringBuffer buf;
   int localVariableCounter = 1;
   bool forStatefulWidget;
 
-  CppTemplateNodeGenerator({@required this.template, @required this.forStatefulWidget});
+  _TemplateNodeGenerator({@required this.template, @required this.forStatefulWidget});
 
   void write(String s) {
     buf.write('    $s');
@@ -281,10 +279,10 @@ String toCppExpression(Binding b, {@required bool forStatefulWidget}) {
   }
 }
 
-class CppWidgetCodeEmitter {
+class _WidgetCodeEmitter {
   final Widget widget;
 
-  CppWidgetCodeEmitter(this.widget);
+  _WidgetCodeEmitter(this.widget);
 
   ComponentMetadata get metadata => widget.metadata;
 
@@ -301,7 +299,7 @@ class CppWidgetCodeEmitter {
     void writeln(s) {
       buf.writeln('    $s');
     }
-    writeln(new CppTemplateNodeGenerator(template: widget.template, forStatefulWidget: widget.isStateful)
+    writeln(new _TemplateNodeGenerator(template: widget.template, forStatefulWidget: widget.isStateful)
         .render());
     return buf.toString();
   }

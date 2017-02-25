@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 
 import 'package:barista2/src/generator.dart';
-import 'package:barista2/src/cpp_generator.dart';
+import 'package:barista2/src/cpp_generator.dart' as cpp;
+import 'package:barista2/src/ng2d_generator.dart' as ng2d;
 
 int optimizerLevel = 3;
 
@@ -38,7 +39,12 @@ Future<Null> main(List<String> rawArgs) async {
   print('  ${Field.fieldCount} fields');
   print('  Average fields/widget: ${Field.fieldCount / totalWidgets}');
 
-  new CppCodeEmitter('giant').render(app).forEach((String file, String code) {
+  new cpp.CodeEmitter().render(app).forEach((String file, String code) {
+    var cppFile = new File(file);
+    cppFile.writeAsStringSync(code.toString());
+  });
+
+  new ng2d.CodeEmitter().render(app).forEach((String file, String code) {
     var cppFile = new File(file);
     cppFile.writeAsStringSync(code.toString());
   });

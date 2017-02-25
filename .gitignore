@@ -25,3 +25,4 @@ pubspec.lock
 giant_widgets.h
 giant.js
 test_giant
+web/giant_widgets.dart

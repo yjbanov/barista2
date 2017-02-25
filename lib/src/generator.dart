@@ -1,10 +1,6 @@
-import 'dart:async';
-import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:args/args.dart';
 import 'package:meta/meta.dart';
-import 'package:process/process.dart';
 
 int multiplier = 5;
 
@@ -628,7 +624,7 @@ class WidgetGenerator {
     );
   }
 
-  TemplateNode randomChild({@required int depth, bool unconditional = false}) {
+  TemplateNode randomChild({@required int depth, bool unconditional: false}) {
     if (depth <= 1) {
       return randomElementNode(depth: depth, unconditional: unconditional);
     } else {
@@ -652,7 +648,7 @@ class WidgetGenerator {
   }
 
   ElementNode randomElementNode(
-      {@required int depth, bool unconditional = false}) {
+      {@required int depth, bool unconditional: false}) {
     return new ElementNode(
       tag: randomTag(),
       attrs: randomAttrs(),
@@ -669,7 +665,7 @@ class WidgetGenerator {
   }
 
   WidgetNode randomWidgetNode(
-      {@required int depth, bool unconditional = false}) {
+      {@required int depth, bool unconditional: false}) {
     Widget widget = nextWidget();
     var args = <Attribute>[];
 
@@ -733,7 +729,7 @@ class WidgetGenerator {
 
   TemplateNode randomTemplateNode({
     @required int depth,
-    bool unconditional = false,
+    bool unconditional: false,
   }) {
     return rnd.nextBool()
         ? randomElementNode(depth: depth, unconditional: unconditional)
