@@ -8,13 +8,20 @@
   <body>
     <giant-app></giant-app>
 
-    <script type="application/dart" src="giant.dart"></script>
-    <script src="packages/browser/dart.js"></script>
     <script>
+        let beforeMain = performance.now();
+
+        function inMain() {
+          let afterMain = performance.now();
+          console.log(`>>> Time to main: ${afterMain - beforeMain} ms`);
+        }
+
         function printStats() {
             console.log(document.querySelectorAll('*').length, 'elements');
             console.log(document.querySelectorAll('*[widget]').length, 'widgets');
         }
     </script>
+    <script type="application/dart" src="giant.dart"></script>
+    <script src="packages/browser/dart.js"></script>
   </body>
 </html>
