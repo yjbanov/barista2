@@ -21,6 +21,7 @@ unittests
 packages
 pubspec.lock
 .packages
+build/
 
 giant_widgets.h
 giant.js
