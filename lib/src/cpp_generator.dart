@@ -59,7 +59,9 @@ int main() {
 
     code.writeln(stateHeader);
 
+    code.writeln('if (visible) {');
     code.writeln("container->AddChild(make_shared<${app.rootWidget.metadata.name}>());");
+    code.writeln('}');
 
     code.writeln(stateFooter);
     code.writeln(footer);
@@ -86,11 +88,21 @@ using namespace barista;
   static const stateHeader = """
 class SampleAppState : public State, public enable_shared_from_this<SampleAppState>{
  public:
+  bool visible = true;
+
   SampleAppState() {
   };
 
   virtual shared_ptr<Node> Build() {
     auto container = El("div");
+    auto toggle = El("button");
+    toggle->SetKey("toggle");
+    toggle->SetText("Toggle visibility");
+    toggle->AddEventListener("click", [&]() {
+      visible = !visible;
+      ScheduleUpdate();
+    });
+    container->AddChild(toggle);
 """;
 
   static const stateFooter = """
