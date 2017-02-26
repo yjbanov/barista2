@@ -36,7 +36,7 @@ Future<Null> cc(dynamic source, String output,
   if (source is String) {
     args.add(source);
   } else if (source is Iterable) {
-    args.addAll(source);
+    source.forEach(args.add);
   } else {
     throw '`source` must be either String or Iterable';
   }

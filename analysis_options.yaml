@@ -1,0 +1,10 @@
+analyzer:
+  strong-mode: true
+  exclude:
+    - web/giant_widgets.dart
+    - ng2ts/**
+
+linter:
+  rules:
+    - await_only_futures
+    - unawaited_futures
