@@ -6,8 +6,8 @@ class CodeEmitter {
 
   Map<String, String> render(App app) {
     return {
-      'ng2ts/giant/src/app/app.component.ts': _widgetCode(app),
-      'ng2ts/giant/src/app/app.module.ts': _moduleCode(app),
+      'others/ng2ts/giant/src/app/app.component.ts': _widgetCode(app),
+      'others/ng2ts/giant/src/app/app.module.ts': _moduleCode(app),
     };
   }
 

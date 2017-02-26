@@ -2,7 +2,7 @@ analyzer:
   strong-mode: true
   exclude:
     - web/giant_widgets.dart
-    - ng2ts/**
+    - others/**
 
 linter:
   rules:
