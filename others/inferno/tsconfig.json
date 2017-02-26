@@ -1,0 +1,28 @@
+{
+	"version": "2.1.5",
+	"compilerOptions": {
+		"target": "es6",
+		"module": "es6",
+		"allowJs": false,
+		"allowSyntheticDefaultImports": true,
+		"sourceMap": true,
+		"lib": [
+			"es6",
+			"es7",
+			"dom"
+		],
+		"types": [
+			"inferno"
+		],
+		"jsx": "preserve",
+		"noUnusedLocals": true,
+		"strictNullChecks": false,
+		"removeComments": false
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules"
+	]
+}
