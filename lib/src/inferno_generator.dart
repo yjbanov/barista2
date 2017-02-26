@@ -6,14 +6,13 @@ class CodeEmitter {
 
   Map<String, String> render(App app) {
     return {
-      'others/ng2ts/giant/src/app/app.component.ts': _widgetCode(app),
-      'others/ng2ts/giant/src/app/app.module.ts': _moduleCode(app),
+      'others/inferno/src/components/components.tsx': _widgetCode(app),
     };
   }
 
   String _widgetCode(App app) {
     var code = new StringBuffer();
-    code.writeln('''import { Component, Input } from '@angular/core';\n''');
+    code.writeln('''import Component from 'inferno-component';\n''');
 
     for (Widget widget in app.widgets) {
       code.writeln(new _WidgetCodeEmitter(widget)
@@ -22,64 +21,30 @@ class CodeEmitter {
 
     code.writeln(
 '''
-@Component({
-  selector: 'app-root',
-  template: `
-<button (click)="toggleVisibility()">Toggle Visibility</button>
-<div *ngIf="visible">
-  <${app.rootWidget.metadata.name.toLowerCase()}></${app.rootWidget.metadata.name.toLowerCase()}>
-</div>
-`
-})
-export class GiantApp {
-  visible: boolean = true;
+interface GiantAppProps {}
 
-  toggleVisibility() {
-    let before = window.performance.now();
-    this.visible = !this.visible;
-    setTimeout(() => {
-      let after = window.performance.now();
-      console.log(`>>> Render frame: \${after - before} ms`);
-    }, 0);
-  }
+export class GiantApp extends Component<GiantAppProps, any> {
+
+	constructor(props, context) {
+		super(props, context);
+	}
+
+	render() {
+		return (
+			<${app.rootWidget.metadata.name}></${app.rootWidget.metadata.name}>
+		);
+	}
 }
 '''
     );
     return code.toString();
-  }
-
-  String _moduleCode(App app) {
-    var declarations = <String>[];
-    for (Widget widget in app.widgets) {
-      declarations.add(widget.metadata.name);
-    }
-
-    return '''
-import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
-
-import * as c from './app.component';
-
-@NgModule({
-  declarations: [
-    c.GiantApp,
-    ${declarations.map((d) => 'c.${d}').join(',\n')}
-  ],
-  imports: [
-    BrowserModule,
-  ],
-  providers: [],
-  bootstrap: [c.GiantApp]
-})
-export class GiantAppModule { }
-''';
   }
 }
 
 class _TemplateNodeGenerator {
   final TemplateNode template;
   final List<String> listeners = [];
-  final List<String> classFields = [];
+  final Map<String, List<String>> classFields = {};
 
   StringBuffer buf;
   int localVariableCounter = 1;
@@ -121,29 +86,35 @@ class _TemplateNodeGenerator {
 
   void _renderToggleButtonNode(ToggleButtonNode node) {
     var listenerName = nextListenerName();
-    listeners.add('''  ${listenerName}(): void { this.${node.controls.variable.name} = !this.${node.controls.variable.name}; }''');
-    write('<button _bkey="${node.key}" (click)="${listenerName}()">${node.text}</button>');
+    listeners.add('''
+    ${listenerName}(): void {
+      this.setState({
+        ${node.controls.variable.name}: !this.state.${node.controls.variable.name}
+      });
+    }
+    ''');
+    write('<button _bkey="${node.key}" onClick="this.${listenerName}">${node.text}</button>');
   }
 
   void _renderElementNode(ElementNode node) {
-    write('<${node.tag}');
     if (node.conditional != null) {
-      var expression = toDartExpression(node.conditional);
-      write(' *ngIf="${expression}"');
+      var expression = toTSExpression(node.conditional, forStatefulWidget: forStatefulWidget);
+      write('{${expression} &&\n');
     }
+    write('<${node.tag}');
     write(' _bkey="${node.key}"');
     for (Attribute attr in node.attrs) {
       Binding b = attr.binding;
       if (b is Literal) {
         write(' ${attr.name}="${b.value}"');
       } else {
-        write(' [attr.${attr.name}]="${toDartExpression(b)}"');
+        write(' ${attr.name}={${toTSExpression(b, forStatefulWidget: forStatefulWidget)}}');
       }
     }
     if (node.classes.isNotEmpty) {
       var classField = nextClassFieldName();
-      write(' [ngClass]="${classField}"');
-      classFields.add('''  ${classField}: Array<String> = ['${node.classes.join("', '")}'];''');
+      write(' class={this.state.${classField}}');
+      classFields[classField] = node.classes;
     }
 
     write('>');
@@ -158,20 +129,23 @@ class _TemplateNodeGenerator {
     }
 
     writeln('</${node.tag}>');
+    if (node.conditional != null) {
+      write('}');
+    }
   }
 
   void _renderWidgetNode(WidgetNode node) {
-    String tag = node.widget.metadata.name.toLowerCase();
-    write('<${tag}');
+    String tag = node.widget.metadata.name;
     if (node.conditional != null) {
-      var expression = toDartExpression(node.conditional);
-      write(' *ngIf="${expression}"');
+      var expression = toTSExpression(node.conditional, forStatefulWidget: forStatefulWidget);
+      write('{${expression} &&\n');
     }
+    write('<${tag}');
     write(' _bkey="${node.key}"');
 
     for (Attribute arg in node.args) {
-      var expression = toDartExpression(arg.binding);
-      write(' [${arg.name}]="${expression}"');
+      var expression = toTSExpression(arg.binding, forStatefulWidget: forStatefulWidget);
+      write(' ${arg.name}={${expression}}');
     }
 
     write('>');
@@ -189,6 +163,9 @@ class _TemplateNodeGenerator {
     }
 
     writeln('</${tag}>');
+    if (node.conditional != null) {
+      write('}');
+    }
   }
 
   bool _debugIsContentNodeRendered = false;
@@ -198,7 +175,7 @@ class _TemplateNodeGenerator {
       throw 'Multiple content nodes generated:\n${template}';
     }
     _debugIsContentNodeRendered = true;
-    writeln('<ng-content></ng-content>');
+    writeln('{this.props.children}');
   }
 }
 
@@ -206,11 +183,20 @@ String capitalize(String s) {
   return s[0].toUpperCase() + s.substring(1);
 }
 
-String toDartExpression(Binding b) {
+String toTSExpression(Binding b, {@required bool forStatefulWidget}) {
   if (b is Literal) {
     return b.value is String ? "'${b.value}'" : '${b.value}';
   } else if (b is Expression) {
-    return b.field.variable.name;
+    if (forStatefulWidget) {
+      if (b.field.source == ValueSource.input) {
+        return 'this.props.${b.field.variable.name}';
+      } else {
+        return 'this.state.${b.field.variable.name}';
+      }
+    } else {
+      // Stateless widgets always access fields from props.
+      return 'this.props.${b.field.variable.name}';
+    }
   } else {
     throw 'oops';
   }
@@ -232,26 +218,31 @@ class _WidgetCodeEmitter {
   String render() {
     var template = _renderTemplate();
     return """
-@Component({
-  selector: '${widget.metadata.name.toLowerCase()}',
-  template: `
-${template}`
-})
-export class ${metadata.name} {
-  ${_generateInputFields()}
-  ${_generateStateFields()}
-  ${_generateClassFields()}
+${_generatePropsInterface()}
+
+${_generateStateInterface()}
+
+export class ${metadata.name} extends Component<${metadata.name}Props, ${metadata.name}State> {
   ${_generateListeners()}
+
+  ${_generatePropDefaults()}
+
+  constructor(props, context) {
+		super(props, context);
+    ${_generateInitState()}
+	}
+
+  render() {
+		return (
+			${template}
+		);
+	}
 }
 """;
   }
 
   String _generateListeners() {
     return templateGenerator.listeners.join('\n\n');
-  }
-
-  String _generateClassFields() {
-    return templateGenerator.classFields.join('\n\n');
   }
 
   String _renderTemplate() {
@@ -264,25 +255,64 @@ export class ${metadata.name} {
       ? v.initialValue.toString()
       : '"${v.initialValue}"';
 
-  String _generateStateFields() {
-    return metadata.states
-        .map((i) =>
-            '  ${i.name}: ${_typeNameOf(i)} = ${_initialValue(i)};\n')
-        .join();
+  String _generateStateInterface() {
+    var buf = new StringBuffer();
+    buf.writeln('interface ${metadata.name}State {');
+    for (Variable s in metadata.states) {
+      buf.writeln('  ${s.name}: ${_typeNameOf(s)};');
+    }
+    templateGenerator.classFields.forEach((String fieldName, _) {
+      buf.writeln('  ${fieldName}: Array<String>;');
+    });
+    buf.write('}');
+    return buf.toString();
   }
 
-  String _generateInputFields() {
+  String _generateInitState() {
     var buf = new StringBuffer();
+    buf.writeln('this.state = {');
+    var initializers = <String>[];
+    for (Variable s in metadata.states) {
+      initializers.add('${s.name}: ${_initialValue(s)}');
+    }
+    templateGenerator.classFields.forEach((String fieldName, List<String> classNames) {
+      initializers.add('${fieldName}: [${classNames.map((c) => '"$c"').join(', ')}]');
+    });
+    buf.writeln(initializers.map((i) => '  ${i}').join(',\n'));
+    buf.write('};');
+    return buf.toString();
+  }
 
+  String _generatePropsInterface() {
+    var buf = new StringBuffer();
+    buf.writeln('interface ${metadata.name}Props {');
+    buf.writeln('  children: any;');
     void addField(String name, String type, String initialValue) {
-      buf.writeln('  @Input()');
-      buf.writeln('  ${name}: ${type} = ${initialValue};');
+      buf.writeln('  ${name}: ${type};');
     }
 
     for (Variable input in metadata.inputs) {
       addField(input.name, _typeNameOf(input), _initialValue(input));
     }
 
+    buf.write('}');
+    return buf.toString();
+  }
+
+  String _generatePropDefaults() {
+    var buf = new StringBuffer();
+    buf.writeln('static defaultProps = {');
+
+    bool first = true;
+    for (Variable input in metadata.inputs) {
+      if (!first) {
+        buf.write(',');
+      }
+      buf.writeln('  ${input.name}: ${_initialValue(input)}');
+      first = false;
+    }
+
+    buf.writeln('};');
     return buf.toString();
   }
 }

@@ -23,3 +23,5 @@ node_modules
 *.swp
 *~
 test/data/result.json
+
+src/components/components.tsx

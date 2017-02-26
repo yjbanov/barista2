@@ -569,9 +569,27 @@ class WidgetGenerator {
     return tags[rnd.nextInt(tags.length)];
   }
 
-  String randomAttrName() {
-    const attrs = const ['id', 'title', 'href', 'width', 'height', 'alt'];
-    return attrs[rnd.nextInt(attrs.length)];
+  static String randomDimension() => '${5 + rnd.nextInt(10)}px';
+
+  static const Map<String, Function> _attrGenerators = const {
+    'id': randomShortString,
+    'title': randomShortString,
+    'href': randomShortString,
+    'width': randomDimension,
+    'height': randomDimension,
+    'alt': randomShortString,
+  };
+
+  Map<String, String> randomAttrNamesAndDefaults() {
+    List<String> attrs = new List.from(_attrGenerators.keys);
+    attrs.shuffle();
+    int count = rnd.nextInt(5);
+    attrs = attrs.take(count).toList();
+    return new Map.fromIterable(
+      attrs,
+      key: (k) => k,
+      value: (k) => _attrGenerators[k](),
+    );
   }
 
   int fieldNameCounter = 1;
@@ -598,9 +616,7 @@ class WidgetGenerator {
 
   List<Attribute> randomAttrs() {
     var attrs = <Attribute>[];
-    var count = rnd.nextInt(5);
-    for (int i = 0; i < count; i++) {
-      String name = randomAttrName();
+    randomAttrNamesAndDefaults().forEach((String name, String defaultValue) {
       // Expression or literal?
       if (rnd.nextBool()) {
         attrs.add(new Attribute(
@@ -610,10 +626,10 @@ class WidgetGenerator {
       } else {
         attrs.add(new Attribute(
           name,
-          new Literal.string('${rnd.nextInt(100)}'),
+          new Literal.string(defaultValue),
         ));
       }
-    }
+    });
     return attrs;
   }
 

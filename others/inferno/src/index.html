@@ -1,14 +1,22 @@
 <html>
 	<head>
-		<title>Giant Inferno app</title>
+		<title>Inferno giant app benchmark</title>
 		<style>
 			*[widget] {
 			    border: 1px solid black;
 			    padding: 1px;
+					margin: 1px;
 			}
 		</style>
 	</head>
 	<body>
 		<div id="app"></div>
 	</body>
+
+	<script>
+	function printStats() {
+	    console.log(document.querySelectorAll('*').length, 'elements');
+	    console.log(document.querySelectorAll('*[widget]').length, 'widgets');
+	}
+	</script>
 </html>
