@@ -25,12 +25,23 @@ class CodeEmitter {
 @Component({
   selector: 'app-root',
   template: `
-<div>
+<button (click)="toggleVisibility()">Toggle Visibility</button>
+<div *ngIf="visible">
   <${app.rootWidget.metadata.name.toLowerCase()}></${app.rootWidget.metadata.name.toLowerCase()}>
 </div>
 `
 })
 export class GiantApp {
+  visible: boolean = true;
+
+  toggleVisibility() {
+    let before = window.performance.now();
+    this.visible = !this.visible;
+    setTimeout(() => {
+      let after = window.performance.now();
+      console.log(`>>> Render frame: \${after - before} ms`);
+    }, 10);
+  }
 }
 '''
     );

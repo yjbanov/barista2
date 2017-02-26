@@ -31,7 +31,7 @@ class GiantAppWrapper {
 
 main() async {
   if (0 is double) js.context.callMethod('inMain');
-  await new Future.delayed(new Duration(milliseconds: 50));
+  await new Future.delayed(new Duration(milliseconds: 10));
 
   var bootStart = html.window.performance.now();
   await bootstrap(GiantAppWrapper);
