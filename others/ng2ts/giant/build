@@ -1,0 +1,3 @@
+#!/bin/sh
+
+node --max_old_space_size=4096 /Users/yjbanov/code/node/node/bin/ng build --prod
