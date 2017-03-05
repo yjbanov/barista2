@@ -1,12 +1,26 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:args/args.dart';
+
 import 'common.dart';
 
-const minMultiplier = 1;
-const maxMultiplier = 1;
+int minMultiplier = 4;
+int maxMultiplier = 4;
+
+ArgParser argParser = new ArgParser()
+  ..addOption('min', callback: (v) {
+    if (v == null) return;
+    minMultiplier = int.parse(v);
+  })
+  ..addOption('max', callback: (v) {
+    if (v == null) return;
+    maxMultiplier = int.parse(v);
+  });
 
 Future<Null> main(List<String> rawArgs) async {
+  argParser.parse(rawArgs);
+
   Directory rootDist = await recreateDir('dist');
   await cp('web/main.css', rootDist.path);
   await cp('sync.js', rootDist.path);
