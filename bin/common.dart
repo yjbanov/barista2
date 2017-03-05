@@ -2,10 +2,39 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as path;
 import 'package:process/process.dart';
 
 final pm = new LocalProcessManager();
 String optimizerLevel = '3';
+
+/// Deletes a directory (if exists), and create a new empty one.
+///
+/// Deleting and creation are done recursively.
+Future<Directory> recreateDir(String path) async {
+  var dir = new Directory(path);
+  if (await dir.exists()) {
+    await dir.delete(recursive: true);
+  }
+  await dir.create(recursive: true);
+  return dir;
+}
+
+/// Non-recursively lists files in the given directory.
+Future<List<File>> lsFiles(String dir) async {
+  return (await new Directory(dir).list().toList()).where((e) => e is File).toList();
+}
+
+Future<File> cp(String file, String dir) async {
+  var f = new File(file);
+  var d = new Directory(dir);
+  if (!(await d.exists())) {
+    throw 'Directory does not exist $dir';
+  }
+  var target = '${d.path}/${path.basename(f.path)}';
+  await f.copy(target);
+  return new File(target);
+}
 
 Future<Null> gzip(String file) async {
   await exec('gzip', ['-k', '-f', file]);
@@ -77,13 +106,19 @@ Future<Process> startProcess(
 
 /// Executes a command and returns its exit code.
 Future<int> exec(
-    String executable,
-    List<String> arguments, {
-    Map<String, String> environment,
-    bool canFail: false,
-    }) async {
+  String executable,
+  List<String> arguments, {
+  Map<String, String> environment,
+  bool canFail: false,
+  String workingDirectory,
+}) async {
   Process process =
-  await startProcess(executable, arguments, environment: environment);
+  await startProcess(
+    executable,
+    arguments,
+    environment: environment,
+    workingDirectory: workingDirectory,
+  );
 
   process.stdout
       .transform(UTF8.decoder)
@@ -97,7 +132,7 @@ Future<int> exec(
   int exitCode = await process.exitCode;
 
   if (exitCode != 0 && !canFail)
-    throw 'Executable failed with exit code $exitCode.';
+    throw 'Executable failed with exit code $exitCode: $executable ${arguments?.join(" ") ?? ""}';
 
   return exitCode;
 }
