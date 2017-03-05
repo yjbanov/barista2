@@ -37,7 +37,7 @@ Future<List<File>> _buildWasm() async {
   return [
     new File('giant.js'),
     new File('giant.wasm'),
-    new File('giant.wasm.html'),
+    new File('index.html'),
   ];
 }
 
