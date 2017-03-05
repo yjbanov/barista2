@@ -125,7 +125,10 @@ function allReady() {
         console.log('>>> ====== syncFromNative =======');
         let renderStart = performance.now();
         let json = renderFrame();
-        // console.log(json);
+        setTimeout(() => {
+          let renderFullEnd = performance.now();
+          printPerf('renderFull', renderStart, renderFullEnd);
+        }, 0);
         let renderEnd = performance.now();
         printPerf('renderFrame', renderStart, renderEnd);
         console.log('>>> diff size: ', json.length);
