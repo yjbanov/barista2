@@ -207,8 +207,16 @@ class _WidgetCodeEmitter {
   _TemplateNodeGenerator templateGenerator;
 
   _WidgetCodeEmitter(this.widget) {
+    // Force the same number of DOM elements as NG by wrapping template artificially
+    ElementNode wrappedTemplate = new ElementNode(
+      tag: widget.metadata.name.toLowerCase(),
+      children: [widget.template],
+      classes: [],
+      attrs: [],
+      conditional: null,
+    );
     templateGenerator = new _TemplateNodeGenerator(
-      template: widget.template,
+      template: wrappedTemplate,
       forStatefulWidget: widget.isStateful,
     );
   }

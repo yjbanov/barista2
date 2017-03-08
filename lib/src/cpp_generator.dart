@@ -308,10 +308,15 @@ class _WidgetCodeEmitter {
 
   String _renderTemplate() {
     var buf = new StringBuffer();
-    void writeln(s) {
-      buf.writeln('    $s');
-    }
-    writeln(new _TemplateNodeGenerator(template: widget.template, forStatefulWidget: widget.isStateful)
+    // Force the same number of DOM elements as NG by wrapping template artificially
+    ElementNode wrappedTemplate = new ElementNode(
+      tag: widget.metadata.name.toLowerCase(),
+      children: [widget.template],
+      classes: [],
+      attrs: [],
+      conditional: null,
+    );
+    buf.writeln('    ' + new _TemplateNodeGenerator(template: wrappedTemplate, forStatefulWidget: widget.isStateful)
         .render());
     return buf.toString();
   }
