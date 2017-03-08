@@ -8,6 +8,9 @@ import 'package:process/process.dart';
 final pm = new LocalProcessManager();
 String optimizerLevel = '3';
 
+File f(String path) => new File(path);
+Directory d(String path) => new Directory(path);
+
 /// Deletes a directory (if exists), and create a new empty one.
 ///
 /// Deleting and creation are done recursively.
