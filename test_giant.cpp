@@ -1,32 +1,72 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <time.h>
+#include <chrono>
 
 #include "api.h"
 #include "test.h"
 #include "giant_widgets.h"
 
 using namespace std;
+using namespace std::chrono;
 using namespace barista;
 
-TEST(TestBootstrapGiantApp)
-  auto tree = make_shared<Tree>(make_shared<SampleApp>());
-  tree->RenderFrame();
-END_TEST
+class WrapperState : public State {
+ public:
+  bool visible = true;
 
-TEST(TestWidget0)
-  auto root = make_shared<Widget0>();
-  root->AddChild(El("div"));
-  auto tree = make_shared<Tree>(root);
-  cout << tree->RenderFrame(1) << endl;
-  tree->DispatchEvent("click", "24");
-  cout << tree->RenderFrame(2) << endl;
+  WrapperState() : State() { };
+
+  virtual shared_ptr<Node> Build() {
+    auto container = El("div");
+    if (visible) {
+      container->AddChild(make_shared<SampleApp>());
+    }
+    return container;
+  }
+};
+
+class Wrapper : public StatefulWidget {
+ public:
+  shared_ptr<WrapperState> state = nullptr;
+
+  Wrapper() : StatefulWidget() {}
+
+  virtual shared_ptr<State> CreateState() {
+    return state = make_shared<WrapperState>();
+  }
+};
+
+// milliseconds Now() {
+//   return duration_cast< milliseconds >(
+//     system_clock::now().time_since_epoch()
+//   );
+// }
+
+TEST(TestBootstrapGiantApp)
+  auto before_boot = system_clock::now();
+  auto wrapper = make_shared<Wrapper>();
+  auto tree = make_shared<Tree>(wrapper);
+  auto html = tree->RenderFrame();
+  auto after_boot = system_clock::now();
+  duration<double> delta = after_boot - before_boot;
+  cout << "Bootstrap time: " << delta.count() * 1000 << "ms; tree size: " << html.size() << " chars" << endl;
+
+  for (int flip = 1; flip <= 10; flip++) {
+    auto before_flip = system_clock::now();
+    wrapper->state->visible = !wrapper->state->visible;
+    wrapper->state->ScheduleUpdate();
+    auto html = tree->RenderFrame();
+    auto after_flip = system_clock::now();
+    duration<double> delta = after_flip - before_flip;
+    cout << "Flip #" << flip << " took: " << delta.count() * 1000 << "ms; tree size: " << html.size() << " chars" << endl;
+  }
 END_TEST
 
 int main() {
   cout << "Start tests" << endl;
   TestBootstrapGiantApp();
-  TestWidget0();
   cout << "End tests" << endl;
   return 0;
 }

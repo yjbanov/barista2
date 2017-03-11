@@ -1,6 +1,6 @@
 name: barista2
 dependencies:
-  angular2: any
+  angular2: 3.0.0-alpha
   args: any
   process: any
 dev_dependencies:

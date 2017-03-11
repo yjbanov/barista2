@@ -39,6 +39,7 @@ Future<Null> main(List<String> rawArgs) async {
 
     List<BuildResult> builds = await Future.wait(<Future<BuildResult>>[
       _buildWasm(),
+      _buildNative(),
       _buildNg2Dart(),
       _buildNg2Ts(),
       _buildInferno(),
@@ -121,6 +122,21 @@ Future<BuildResult> _buildWasm() async {
     sourceSize: await computeSourceSize(f('giant_widgets.h')),
     compiledSize: await wasm.length(),
     compressedSize: await computeCompressedSize(wasm),
+  );
+}
+
+Future<BuildResult> _buildNative() async {
+  await exec('cmake', ['-DCMAKE_BUILD_TYPE=Release']);
+  await exec('make', ['test_giant']);
+  var executable = f('test_giant');
+  return new BuildResult(
+    framework: 'native',
+    files: [
+      executable,
+    ],
+    sourceSize: await computeSourceSize(f('giant_widgets.h')),
+    compiledSize: await executable.length(),
+    compressedSize: await computeCompressedSize(executable),
   );
 }
 
