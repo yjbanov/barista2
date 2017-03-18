@@ -280,11 +280,13 @@ function loadApp(fileNameWithoutExtension) {
 function loadAppWithoutIDB(fileNameWithoutExtension) {
   loadStart = performance.now();
   console.log('>>> loading from network');
-  loadModuleFromNetwork(fileNameWithoutExtension).then(function(module) {
-    storeModuleInIndexedDB(module).then(function(_) {
-      bootstrapWasm(fileNameWithoutExtension, module);
-    });
-  });
+  return fetch(`${fileNameWithoutExtension}.wasm`)
+      .then(function (response) {
+        return response.arrayBuffer();
+      })
+      .then(function (bytes) {
+        bootstrapWasm(fileNameWithoutExtension, null, bytes);
+      });
 }
 
 function loadAppWithIDB(fileNameWithoutExtension) {

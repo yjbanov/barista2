@@ -25,3 +25,12 @@ add_executable(test_giant test_giant.cpp)
 target_link_libraries(test_giant libtest)
 
 add_executable(precise_time precise_time.cpp)
+
+# TodoMVC
+add_library(libtodo_widgets todo_widgets.h todo_widgets.cpp)
+
+add_executable(todo todo.cpp)
+target_link_libraries(todo libbarista2 libtodo_widgets)
+
+add_executable(todo_test todo_test.cpp)
+target_link_libraries(todo_test libtest libtodo_widgets)

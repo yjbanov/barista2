@@ -9,15 +9,8 @@ import 'package:barista2/src/ng2d_generator.dart' as ng2d;
 import 'package:barista2/src/ng2ts_generator.dart' as ng2ts;
 import 'package:barista2/src/inferno_generator.dart' as inferno;
 
-int optimizerLevel = 3;
-
 Future<Null> main(List<String> rawArgs) async {
   var argParser = new ArgParser()
-    ..addOption('optimizer-level', abbr: 'O', callback: (String v) {
-      if (v != null) {
-        optimizerLevel = int.parse(v);
-      }
-    })
     ..addOption('multiplier', abbr: 'm', callback: (String v) {
       if (v != null) {
         multiplier = int.parse(v);
@@ -48,7 +41,7 @@ Future<Null> main(List<String> rawArgs) async {
   new ng2d.CodeEmitter().render(app).forEach((String file, String code) {
     new File(file).writeAsStringSync(code.toString());
   });
-  
+
   new ng2ts.CodeEmitter().render(app).forEach((String file, String code) {
     new File(file).writeAsStringSync(code.toString());
   });
