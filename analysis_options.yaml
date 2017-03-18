@@ -3,6 +3,9 @@ analyzer:
   exclude:
     - web/giant_widgets.dart
     - others/**
+    - dist/**
+    - build/**
+    - CMakeFiles/**
 
 linter:
   rules:

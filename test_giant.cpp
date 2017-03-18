@@ -38,14 +38,9 @@ class Wrapper : public StatefulWidget {
   }
 };
 
-// milliseconds Now() {
-//   return duration_cast< milliseconds >(
-//     system_clock::now().time_since_epoch()
-//   );
-// }
-
 TEST(TestBootstrapGiantApp)
   auto before_boot = system_clock::now();
+  cout << "In main " << duration_cast<milliseconds>(before_boot.time_since_epoch()).count() << endl;
   auto wrapper = make_shared<Wrapper>();
   auto tree = make_shared<Tree>(wrapper);
   auto html = tree->RenderFrame();

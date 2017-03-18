@@ -27,6 +27,48 @@
 					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
+			<Target title="precise_time">
+				<Option output="/Users/yjbanov/code/barista2/precise_time" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 precise_time"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="precise_time/fast">
+				<Option output="/Users/yjbanov/code/barista2/precise_time" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yjbanov/code/barista2"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/yjbanov/code/emscripten/emscripten/1.35.0/system/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.0.0/include"/>
+					<Add directory="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 precise_time/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yjbanov/code/barista2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
 			<Target title="test_giant">
 				<Option output="/Users/yjbanov/code/barista2/test_giant" prefix_auto="0" extension_auto="0"/>
 				<Option working_dir="/Users/yjbanov/code/barista2"/>
@@ -313,6 +355,9 @@
 		</Unit>
 		<Unit filename="/Users/yjbanov/code/barista2/main.cpp">
 			<Option target="main"/>
+		</Unit>
+		<Unit filename="/Users/yjbanov/code/barista2/precise_time.cpp">
+			<Option target="precise_time"/>
 		</Unit>
 		<Unit filename="/Users/yjbanov/code/barista2/style.cpp">
 			<Option target="libbarista2"/>

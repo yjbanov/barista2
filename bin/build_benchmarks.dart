@@ -6,8 +6,8 @@ import 'package:meta/meta.dart';
 
 import 'common.dart';
 
-int minMultiplier = 4;
-int maxMultiplier = 4;
+int minMultiplier = 1;
+int maxMultiplier = 6;
 
 ArgParser argParser = new ArgParser()
   ..addOption('min', callback: (v) {

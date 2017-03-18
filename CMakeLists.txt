@@ -23,3 +23,5 @@ add_library(libgiantwidgets giant_widgets.h)
 set_target_properties(libgiantwidgets PROPERTIES LINKER_LANGUAGE CXX)
 add_executable(test_giant test_giant.cpp)
 target_link_libraries(test_giant libtest)
+
+add_executable(precise_time precise_time.cpp)
