@@ -10,7 +10,7 @@ using namespace std;
 using namespace barista;
 
 TEST(TestTodoApp)
-  auto tree = make_shared<Tree>(make_shared<SampleApp>());
+  auto tree = make_shared<Tree>(make_shared<TodoApp>());
   auto html = tree->RenderFrame();
 END_TEST
 

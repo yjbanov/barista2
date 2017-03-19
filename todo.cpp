@@ -1,12 +1,7 @@
 #include <iostream>
 #include <emscripten/emscripten.h>
-#include <list>
-#include <locale>
-#include <codecvt>
-#include <string>
 
 #include "api.h"
-#include "html.h"
 #include "todo_widgets.h"
 
 using namespace std;
@@ -33,7 +28,7 @@ int main() {
   EM_ASM(
       enteredMain();
   );
-  tree = make_shared<Tree>(make_shared<SampleApp>());
+  tree = make_shared<Tree>(make_shared<TodoApp>());
   EM_ASM(
     allReady();
   );

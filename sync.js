@@ -159,7 +159,7 @@ function allReady() {
         console.timeStamp('End apply diff');
     }
 
-    host.addEventListener("click", function(event) {
+    function handleEvent(type, event) {
         // Look for the nearest parent with a _bid, then dispatch to it.
         let bid = null;
         let parent = event.target;
@@ -168,11 +168,18 @@ function allReady() {
             parent = parent.parentNode;
         }
         if (bid) {
-            dispatchEvent("click", bid);
+            dispatchEvent(type, bid);
             syncFromNative();
         } else {
             console.log(">>> caught event on target with no _bid:", event.target);
         }
+    }
+
+    let eventTypes = ["click", "keyup"];
+    eventTypes.forEach((type) => {
+        host.addEventListener(type, function(event) {
+            handleEvent(type, event);
+        });
     });
     syncFromNative();
 }

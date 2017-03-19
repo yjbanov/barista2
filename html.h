@@ -38,6 +38,13 @@ class Element : public MultiChildNode, public enable_shared_from_this<Element> {
     return child;
   }
 
+  shared_ptr<Element> Nest(vector<shared_ptr<Node>> children) {
+    for (auto i = children.begin(); i != children.end(); i++) {
+      AddChild(*i);
+    }
+    return shared_from_this();
+  }
+
  private:
   class EventListenerConfig {
    private:
