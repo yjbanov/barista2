@@ -17,8 +17,7 @@ namespace barista {
 
 using namespace std;
 
-// TODO: define an Event interface and pass it to EventListener.
-typedef function<void()> EventListener;
+typedef function<void(const Event&)> EventListener;
 
 class Element : public MultiChildNode, public enable_shared_from_this<Element> {
  public:
@@ -84,7 +83,7 @@ class RenderElement : public RenderMultiChildParent {
   RenderElement(shared_ptr<Tree> tree) : RenderMultiChildParent(tree) {}
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
-  virtual void DispatchEvent(string type, string baristaId);
+  virtual void DispatchEvent(const Event& event);
 
   static void DangerouslyResetBaristaIdCounterForTesting() { _bidCounter = 1; }
  private:

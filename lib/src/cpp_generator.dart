@@ -30,8 +30,9 @@ const char* RenderFrame() {
   return lastDiff.c_str();
 }
 
-void DispatchEvent(char* type, char* baristaId) {
-  tree->DispatchEvent(type, baristaId);
+void DispatchEvent(char* type, char* baristaId, char* data) {
+  auto event = Event(type, baristaId, data);
+  tree->DispatchEvent(event);
 }
 
 int main() {
@@ -98,7 +99,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
     auto toggle = El("button");
     toggle->SetKey("toggle");
     toggle->SetText("Toggle visibility");
-    toggle->AddEventListener("click", [&]() {
+    toggle->AddEventListener("click", [&](const Event& _) {
       visible = !visible;
       ScheduleUpdate();
     });
@@ -173,7 +174,7 @@ class _TemplateNodeGenerator {
     writeln('${variableName}->SetKey("${node.key}");');
     writeln('${variableName}->SetText("${node.text}");');
     writeln('''
-      ${variableName}->AddEventListener("click", [&]() {
+      ${variableName}->AddEventListener("click", [&](const Event& _) {
         ${node.controls.variable.name} = !${node.controls.variable.name};
         ScheduleUpdate();
       });

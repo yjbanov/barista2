@@ -95,7 +95,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
           statusButton->AddClassName("active-status");
         }
         statusButton->SetText(status);
-        statusButton->AddEventListener("click", [key, thiz, status]() {
+        statusButton->AddEventListener("click", [key, thiz, status](const Event& _) {
           cout << "Changing status from " << thiz->rows[key].status << " to " << status << endl;
           thiz->rows[key].status = status;
           thiz->ScheduleUpdate();
@@ -105,7 +105,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
       auto removeButton = row->El("div")->El("button");
       removeButton->SetText("Remove");
       // TODO(yjbanov): this probably creates a cycle between <button> and SampleAppState
-      removeButton->AddEventListener("click", [key, thiz]() {
+      removeButton->AddEventListener("click", [key, thiz](const Event& _) {
         thiz->rows.erase(key);
         thiz->ScheduleUpdate();
       });
@@ -113,7 +113,7 @@ class SampleAppState : public State, public enable_shared_from_this<SampleAppSta
 
     auto button = El("button");
     button->SetText("Add Row");
-    button->AddEventListener("click", [&]() {
+    button->AddEventListener("click", [&](const Event& _) {
       cout << "Clicked! " << greet << endl;
       greet = !greet;
       AddRow();
@@ -149,8 +149,9 @@ const char* RenderFrame() {
   return lastDiff.c_str();
 }
 
-void DispatchEvent(char* type, char* baristaId) {
-  tree->DispatchEvent(type, baristaId);
+void DispatchEvent(char* type, char* baristaId, char* data) {
+  auto event = Event(type, baristaId, data);
+  tree->DispatchEvent(event);
 }
 
 int main() {

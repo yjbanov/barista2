@@ -110,7 +110,7 @@ class BuildResult {
 }
 
 Future<BuildResult> _buildWasm() async {
-  await exec('dart', ['bin/build_wasm.dart', '--optimizer-level=3']);
+  await exec('dart', ['bin/build_wasm.dart', '--optimizer-level=3', '--app=giant']);
   var wasm = f('giant.wasm');
   return new BuildResult(
     framework: 'wasm',

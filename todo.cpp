@@ -20,8 +20,9 @@ const char* RenderFrame() {
   return lastDiff.c_str();
 }
 
-void DispatchEvent(char* type, char* baristaId) {
-  tree->DispatchEvent(type, baristaId);
+void DispatchEvent(char* type, char* baristaId, char* data) {
+  auto event = Event(type, baristaId, data);
+  tree->DispatchEvent(event);
 }
 
 int main() {

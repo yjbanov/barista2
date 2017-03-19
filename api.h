@@ -6,6 +6,7 @@
 #define BARISTA2_API_H
 
 #include "sync.h"
+#include "lib/json/src/json.hpp"
 
 #include <cassert>
 #include <functional>
@@ -63,7 +64,7 @@ class RenderNode {
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
 
   virtual void VisitChildren(RenderNodeVisitor visitor) = 0;
-  virtual void DispatchEvent(string type, string baristaId) = 0;
+  virtual void DispatchEvent(const Event& event) = 0;
 
  private:
   shared_ptr<Tree> _tree = nullptr;
@@ -71,11 +72,28 @@ class RenderNode {
   shared_ptr<RenderParent> _parent = nullptr;
 };
 
+class Event {
+ public:
+  Event(string type, string baristaId, string data)
+      : _type(type), _baristaId(baristaId) {
+    _data = nlohmann::json::parse(data);
+  };
+
+  const string GetType() const { return _type; }
+  const string GetBaristaId() const { return _baristaId; }
+  const nlohmann::json& GetData() const { return _data; }
+
+ private:
+  string _type;
+  string _baristaId;
+  nlohmann::json _data;
+};
+
 class Tree : public enable_shared_from_this<Tree> {
  public:
   Tree(shared_ptr<Node> topLevelWidget) : _topLevelWidget(topLevelWidget) {}
   void VisitChildren(RenderNodeVisitor visitor);
-  virtual void DispatchEvent(string type, string baristaId);
+  virtual void DispatchEvent(const Event& event);
   // Applies state changes and produces a serialize HTML diff.
   string RenderFrame() {
     return RenderFrame(0);
@@ -138,7 +156,7 @@ class RenderStatelessWidget : public RenderParent, public enable_shared_from_thi
  public:
   RenderStatelessWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor) { visitor(_child); }
-  virtual void DispatchEvent(string type, string baristaId);
+  virtual void DispatchEvent(const Event& event);
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);
 
@@ -163,7 +181,7 @@ class RenderStatefulWidget : public RenderParent, public enable_shared_from_this
  public:
   RenderStatefulWidget(shared_ptr<Tree> tree) : RenderParent(tree) {}
   virtual void VisitChildren(RenderNodeVisitor visitor);
-  virtual void DispatchEvent(string type, string baristaId);
+  virtual void DispatchEvent(const Event& event);
   virtual void ScheduleUpdate();
   virtual bool CanUpdateUsing(shared_ptr<Node> newConfiguration);
   virtual void Update(shared_ptr<Node> newConfiguration, ElementUpdate& update);

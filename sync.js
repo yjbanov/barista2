@@ -98,6 +98,9 @@ function applyElementUpdate(element, update) {
         let attrs = update["attrs"];
         for (let name in attrs) {
             if (attrs.hasOwnProperty(name)) {
+                if (name == "value") {
+                    element.value = attrs[name];
+                }
                 element.setAttribute(name, attrs[name]);
             }
         }
@@ -119,7 +122,7 @@ function enteredMain() {
 function allReady() {
     console.timeStamp('In main');
     let renderFrame = Module.cwrap('RenderFrame', 'string', []);
-    let dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string']);
+    let dispatchEvent = Module.cwrap('DispatchEvent', 'void', ['string', 'string', 'string']);
     let host = document.querySelector('#host');
 
     function syncFromNative() {
@@ -159,6 +162,17 @@ function allReady() {
         console.timeStamp('End apply diff');
     }
 
+    function serializeEvent(type, event) {
+        let data = {};
+        if (type == 'keyup') {
+            data['keyCode'] = event.keyCode;
+        }
+        if (event.target && event.target.value) {
+            data['value'] = event.target.value;
+        }
+        return JSON.stringify(data);
+    }
+
     function handleEvent(type, event) {
         // Look for the nearest parent with a _bid, then dispatch to it.
         let bid = null;
@@ -168,7 +182,7 @@ function allReady() {
             parent = parent.parentNode;
         }
         if (bid) {
-            dispatchEvent(type, bid);
+            dispatchEvent(type, bid, serializeEvent(type, event));
             syncFromNative();
         } else {
             console.log(">>> caught event on target with no _bid:", event.target);

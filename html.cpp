@@ -130,18 +130,18 @@ void RenderElement::Update(shared_ptr<Node> configPtr, ElementUpdate& update) {
   RenderMultiChildParent::Update(configPtr, update);
 }
 
-void RenderElement::DispatchEvent(string type, string baristaId) {
+void RenderElement::DispatchEvent(const Event& event) {
   assert(dynamic_cast<Element*>(GetConfiguration().get()));
   shared_ptr<Element> config = static_pointer_cast<Element>(GetConfiguration());
-  if (config->_bid == baristaId) {
+  if (config->_bid == event.GetBaristaId()) {
     for (auto listener : config->_eventListeners) {
-      if (listener._type == type) {
-        listener._callback();
+      if (listener._type == event.GetType()) {
+        listener._callback(event);
       }
     }
   } else {
-    VisitChildren([type, baristaId](shared_ptr<RenderNode> child) {
-      child->DispatchEvent(type, baristaId);
+    VisitChildren([event](shared_ptr<RenderNode> child) {
+      child->DispatchEvent(event);
     });
   }
 }

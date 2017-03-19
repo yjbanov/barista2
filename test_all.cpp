@@ -48,7 +48,7 @@ class EventListenerTest : public StatelessWidget {
   shared_ptr<Node> Build() {
     auto div = make_shared<Element>("div");
     auto btn = make_shared<Element>("button");
-    btn->AddEventListener("click", [this]() {
+    btn->AddEventListener("click", [this](const Event& _) {
       eventLog.push_back("click");
     });
     div->AddChild(btn);
@@ -477,7 +477,7 @@ TEST(TestAddEventListeners)
   rootUpdate.SetBaristaId("1");
 
   auto div = make_shared<Element>("div");
-  div->AddEventListener("click", []() {});
+  div->AddEventListener("click", [](const Event& _) {});
   auto tree = make_shared<Tree>(div);
   ExpectTreeUpdate(tree, treeUpdate);
 END_TEST
@@ -488,13 +488,13 @@ TEST(TestPreserveEventListeners)
 
   auto before = make_shared<Element>("div");
   auto beforeChild = make_shared<Element>("span");
-  beforeChild->AddEventListener("click", [](){});
+  beforeChild->AddEventListener("click", [](const Event& _){});
   before->AddChild(beforeChild);
   auto test = make_shared<BeforeAfterTest>(before);
 
   auto after = make_shared<Element>("div");
   auto afterChild = make_shared<Element>("span");
-  afterChild->AddEventListener("click", [](){});
+  afterChild->AddEventListener("click", [](const Event& _){});
   after->AddChild(afterChild);
   test->ExpectStateDiff(after, treeUpdate);
 END_TEST
@@ -505,9 +505,11 @@ TEST(TestDispatchEvent)
   auto tree = make_shared<Tree>(widget);
   tree->RenderFrame();
   ExpectVector(widget->eventLog, vector<string>());
-  tree->DispatchEvent("click", "does not exist");
+  auto event = Event("click", "does not exit", "{}");
+  tree->DispatchEvent(event);
   ExpectVector(widget->eventLog, vector<string>());
-  tree->DispatchEvent("click", "1");
+  event = Event("click", "1", "{}");
+  tree->DispatchEvent(event);
   ExpectVector(widget->eventLog, vector<string>({"click"}));
 END_TEST
 

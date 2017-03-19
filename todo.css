@@ -397,12 +397,3 @@ Can't use it globally since it destroys checkboxes in Firefox
         bottom: 10px;
     }
 }
-
-.header-controls{
-    display: flex;
-    flex-direction: row;
-}
-
-.add-todo-button {
-    padding: 10px;
-}

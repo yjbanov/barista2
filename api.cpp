@@ -75,8 +75,8 @@ void Tree::VisitChildren(RenderNodeVisitor visitor) {
   visitor(_topLevelNode);
 }
 
-void Tree::DispatchEvent(string type, string baristaId) {
-  _topLevelNode->DispatchEvent(type, baristaId);
+void Tree::DispatchEvent(const Event& event) {
+  _topLevelNode->DispatchEvent(event);
 }
 
 shared_ptr<RenderNode> StatelessWidget::Instantiate(shared_ptr<Tree> tree) {
@@ -93,9 +93,9 @@ void internalSetStateNode(shared_ptr<State> state, shared_ptr<RenderStatefulWidg
   state->_node = node;
 }
 
-void RenderStatelessWidget::DispatchEvent(string type, string baristaId) {
+void RenderStatelessWidget::DispatchEvent(const Event& event) {
   if (_child == nullptr) return;
-  _child->DispatchEvent(type, baristaId);
+  _child->DispatchEvent(event);
 }
 
 bool RenderStatelessWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
@@ -143,9 +143,9 @@ void RenderStatefulWidget::ScheduleUpdate() {
   RenderParent::ScheduleUpdate();
 }
 
-void RenderStatefulWidget::DispatchEvent(string type, string baristaId) {
+void RenderStatefulWidget::DispatchEvent(const Event& event) {
   if (_child == nullptr) return;
-  _child->DispatchEvent(type, baristaId);
+  _child->DispatchEvent(event);
 }
 
 bool RenderStatefulWidget::CanUpdateUsing(shared_ptr<Node> newConfiguration) {
