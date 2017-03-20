@@ -223,7 +223,7 @@ function loadModuleFromIndexedDB() {
     openDB().then(function(db) {
       var transaction = db.transaction(["modules"], "readwrite");
       var objectStore = transaction.objectStore("modules");
-      var getRequest = objectStore.get("giant.wasm");
+      var getRequest = objectStore.get(window.location.pathname);
       getRequest.onerror = function(event) {
         console.log('[ERROR] Failed to load module from IDB', event);
         reject(event);
@@ -244,7 +244,7 @@ function storeModuleInIndexedDB(module) {
     openDB().then(function(db) {
       var transaction = db.transaction(["modules"], "readwrite");
       var objectStore = transaction.objectStore("modules");
-      var addRequest = objectStore.put({name: "giant.wasm", module: module});
+      var addRequest = objectStore.put({name: window.location.pathname, module: module});
       addRequest.onerror = function(event) {
         console.log('[ERROR] Failed to store module in IDB', event);
         reject(event);
