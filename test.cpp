@@ -20,6 +20,7 @@ void Expect(T actual, T expected) {
 template void Expect<unsigned long>(unsigned long, unsigned long);
 template void Expect<unsigned int>(unsigned int, unsigned int);
 template void Expect<int>(int, int);
+template void Expect<bool>(bool, bool);
 template void Expect<string>(string, string);
 
 template<typename E>

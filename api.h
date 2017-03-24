@@ -51,9 +51,9 @@ class RenderNode {
  public:
   RenderNode(shared_ptr<Tree> tree);
   virtual shared_ptr<Node> GetConfiguration() { return _configuration; }
-  virtual shared_ptr<RenderParent> GetParent() { return _parent; }
+  virtual shared_ptr<RenderParent> GetParent() { return _parent.lock(); }
   virtual shared_ptr<Tree> GetTree() { return _tree; }
-  virtual void Detach() { _parent = nullptr; }
+  virtual void Detach() { _parent.reset(); }
   virtual void Attach(shared_ptr<RenderParent> newParent) { _parent = newParent; }
 
   /// Returns `true` iff the new configuration is compatible with this node and
@@ -69,7 +69,7 @@ class RenderNode {
  private:
   shared_ptr<Tree> _tree = nullptr;
   shared_ptr<Node> _configuration = nullptr;
-  shared_ptr<RenderParent> _parent = nullptr;
+  weak_ptr<RenderParent> _parent;
 };
 
 class Event {
