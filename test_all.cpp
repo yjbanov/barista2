@@ -116,21 +116,20 @@ class BeforeAfterTestState : public State {
 class BeforeAfterTest : public StatefulWidget {
  public:
   BeforeAfterTest(shared_ptr<Node> beforeState) {
-    _state = make_shared<BeforeAfterTestState>(beforeState);
+    state = make_shared<BeforeAfterTestState>(beforeState);
   };
 
   void ExpectStateDiff(shared_ptr<Node> afterState, TreeUpdate& expectedUpdate) {
     auto tree = make_shared<Tree>(shared_from_this());
     tree->RenderFrame();
-    _state->NextState(afterState);
-    _state->ScheduleUpdate();
+    state->NextState(afterState);
+    state->ScheduleUpdate();
     ExpectTreeUpdate(tree, expectedUpdate);
   }
 
-  virtual shared_ptr<State> CreateState() { return _state; }
+  virtual shared_ptr<State> CreateState() { return state; }
 
- private:
-  shared_ptr<BeforeAfterTestState> _state;
+  shared_ptr<BeforeAfterTestState> state;
 };
 
 
@@ -711,6 +710,32 @@ TEST(TestListDiffRemoveMultiple)
   );
 END_TEST
 
+TEST(TestDetachedSubTreesDoNotLeakMemory)
+  shared_ptr<Tree> tree;
+  weak_ptr<Element> childPtr;
+
+  {
+    auto before = make_shared<Element>("div");
+    childPtr = before->El("div")->El("div");
+
+    auto test = make_shared<BeforeAfterTest>(before);
+    tree = make_shared<Tree>(test);
+    tree->RenderFrame();
+
+    auto after = make_shared<Element>("div");
+    test->state->NextState(after);
+    test->state->ScheduleUpdate();
+
+    Expect(childPtr.expired(), false);
+
+    auto treeUpdate = TreeUpdate();
+    auto& diff = treeUpdate.UpdateRootElement();
+    diff.RemoveChild(0);
+    ExpectTreeUpdate(tree, treeUpdate);
+  }
+  Expect(childPtr.expired(), true);
+END_TEST
+
 void TestChildListDiffing() {
   // Adding things
   TestListDiffAppendChild();
@@ -750,6 +775,7 @@ void TestHtmlDiffing() {
 
 int main() {
   cout << "Start tests" << endl;
+  TestDetachedSubTreesDoNotLeakMemory();
   TestSyncerCreate();
   TestSyncerUpdate();
   TestPrintTag();
