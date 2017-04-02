@@ -25,7 +25,6 @@ Future<Null> main(List<String> rawArgs) async {
   Directory rootDist = await recreateDir('dist');
   await cp('web/main.css', rootDist.path);
   await cp('sync.js', rootDist.path);
-  await cp('util.js', rootDist.path);
 
   var sourceSizeTrend = new Trend('Source size');
   var compiledSizeTrend = new Trend('Compiled size');
