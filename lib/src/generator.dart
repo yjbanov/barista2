@@ -582,7 +582,7 @@ class WidgetGenerator {
 
   Map<String, String> randomAttrNamesAndDefaults() {
     List<String> attrs = new List.from(_attrGenerators.keys);
-    attrs.shuffle();
+    attrs.shuffle(rnd);
     int count = rnd.nextInt(5);
     attrs = attrs.take(count).toList();
     return new Map.fromIterable(
